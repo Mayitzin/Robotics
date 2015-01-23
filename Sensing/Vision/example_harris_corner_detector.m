@@ -1,4 +1,38 @@
-% Example of the functionality of the Harris Corner Detector
+% Practical example of the "Harris Corner Detector" Algorithm
+%
+% This code plots each step estimating the corners in an image using the
+% "Harris Corner Detector" Algorithm.
+%
+% Requires Files:
+% - gauss2D.m
+% - nonmax.m
+%
+% OCTAVE users:
+% - With colored images GNU Octave Users require to download and install
+%   the 'image' package. In your Octave Command prompt try:
+%      pkg install image
+%   Once installed you must load it before using it with:
+%      pkg load image
+%   For more information visit:
+%      http://octave.sourceforge.net/image/index.html
+%
+% For futher reference see:
+%   [1] Foerstner, W. A feature-based correspondence algorithm for image
+%       matching. Intl. Arch. Photogrammetry & Remote Sensing,
+%       26(3):150–166. 1986
+%   [2] C. Harris and M.J. Stephens. A combined corner and edge detector.
+%       Alvey Vision Conference, pages 147–152, 1988.
+%   [3] Szeliski, R. Computer Vision: Algorithms and Applications.
+%       Springer, pages 209-214. 2010.
+%
+% History:
+%     12.05.2012. First Implementation.
+%     29.11.2012. Using customized Gaussian Filter (gauss2D).
+%     23.01.2015. Updated information for Octave.
+%                 Added comments.
+%
+% @author: Mario Garcia.
+%     www.mayitzin.com
 
 close all
 clc
@@ -8,18 +42,18 @@ path = '../../Data/';
 
 % Initial Parameters
 n = 0;
-alpha = 0.04;
+alpha = 0.06;
 s0 = 1.5;                           % initial scale value
 k = 1.2;                            % scale step
 t = 1000000;                        % threshold
 
 % Read the image
-fileName = 'harris.png';
+fileName = 'figures.png';
 full_path = [path,fileName];
-I = imread(full_path);          % Grayscale values of Image in I
-I = rgb2gray(I);                    % If in color, convert to grayscale
+I = imread(full_path);              % Grayscale values of Image in I
+I = rgb2gray(I);                    % Convert to grayscale (GNU Octave uses package 'image')
 
-%% Harris-Corner detector starts
+%% ============== Harris-Corner detector starts ==============
 % Gaussian sigmas
 sigma_I = s0.*k.^n;                 % F = sigma_I = s0*k^n
 sigma_D = 0.7.*sigma_I;             % Sigma of Gaussian
@@ -68,7 +102,7 @@ Te = nonmax(R);
 % Get Location of resulting points
 [Y, X] = find(Te);
 
-%% Plotting
+%% ============== Plotting ==============
 figure(1)
 subplot(2,3,1)
     imagesc(I)
