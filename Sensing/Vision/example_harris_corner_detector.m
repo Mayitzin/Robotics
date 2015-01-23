@@ -3,6 +3,9 @@
 close all
 clc
 
+% Define Path of the Data
+path = '../../Data/';
+
 % Initial Parameters
 n = 0;
 alpha = 0.04;
@@ -11,8 +14,10 @@ k = 1.2;                            % scale step
 t = 1000000;                        % threshold
 
 % Read the image
-I = imread('harrisn.bmp');          % Grayscale values of Image in I
-%I = rgb2gray(I);                    % If in color, convert to grayscale
+fileName = 'harris.png';
+full_path = [path,fileName];
+I = imread(full_path);          % Grayscale values of Image in I
+I = rgb2gray(I);                    % If in color, convert to grayscale
 
 %% Harris-Corner detector starts
 % Gaussian sigmas
