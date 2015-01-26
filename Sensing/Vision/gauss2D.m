@@ -16,6 +16,9 @@
 %     23.01.2015. Updated information for Octave.
 %                 Added comments.
 %
+% TODO:
+%     - Optional specification of mask dimensions.
+%
 % @author: Mario Garcia.
 %     www.mayitzin.com
 

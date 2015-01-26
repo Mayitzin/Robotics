@@ -1,15 +1,14 @@
-%CNV takes an image and a given general M-by-N mask and returns the
-%   convoluted image J.
+%CNV returns the convoluted image J, given its original and a kernel.
 %   cnv(IMAGE,H,BORDER) gets the image and applies a convolution with the
 %   given M-by-N matrix H to obtain the filtered image J.
 %
-%   IMAGE is an M-by-N array containing the gray scale values of the Image
-%   to be filtered, where M is the height of the Image in pixels and N is
-%   the width of the Image in pixels.
+%   IMAGE is an M-by-N array containing the gray scale values of the
+%   image to be filtered, where M is the height of the Image in pixels
+%   and N is the width of the Image in pixels.
 %
 %   H must be an M-by-N array with odd dimensions.
 %
-%   BORDER is a string that specifies the treatment to have as the Padding
+%   BORDER is a string that specifies the method to use as the Padding
 %   configuration at the borders of the image. The accepted values
 %   corresponding to these user-specified parameters are:
 %
@@ -23,17 +22,27 @@
 %               the corners of the image. The thickness of the border
 %               depends on the size of the mask H.
 %
-%   Information
-%   -----------
-%   	Code 2 of 5
-%       Exercise Sheet: 1
-%       Tracking and Detection
-%       WS 2012/13
-%   Technische Universitaet Muenchen
+% For futher reference see:
+%   [1] Szeliski, R. Computer Vision: Algorithms and Applications.
+%       Springer, pages 111-115. 2010.
+%
+%   History:
+%       05.12.2012. First implementation.
+%       26.01.2015. Added Comments and References.
+%                   Set mirrored border as default.
+%
+% @author: Mario Garcia.
+%     www.mayitzin.com
 
-function [J] = cnv(I,H,border)
+function J = cnv(I,H,border)
 
-H = rot90(H,2)./sum(sum(H));    % Rotates by 180° the Kernel and divides it by the sum of its elements
+% Default value
+if nargin<3
+    border = 'mirror';
+end
+
+% Convolution Mask (Rotated 180deg)
+H = rot90(H,2)./sum(sum(H));    % Rotates and normalizes the kernel mask
 
 % Defines the variables to use:
 [m_H, n_H] = size(H);           % Dimensions of Kernel
@@ -48,17 +57,17 @@ switch border
         I2 = [zeros(size(I1,1),thick) I1 zeros(size(I1,1),thick)];	% Adds left and right borders
 
     case 'clamp'
-        I1 = I;                             % Gives to I1 the values of I
+        I1 = I;                           % Temporarily stores I to I1
         for bud = 1:thick
             I1 = [I(1,:); I1; I(m_I,:)];	% Inserts upper and lower borders
         end
-        I2 = I1;                            % Gives to I2 the values of I1
+        I2 = I1;                          % Temporarily stores I1 to I2
         for blr = 1:thick
             I2 = [I1(:,1) I2 I1(:,size(I1,2))];	% Inserts left and right borders
         end
 
     case 'mirror'
-        I1 = I;                             % Gives to I1 the values of I
+        I1 = I;                           % Temporarily stores I to I1
         for t = 1:thick
             I1 = [I(t,:); I1; I(size(I,1)-t+1,:)];	% Inserts borders according to thickness
         end
@@ -72,10 +81,10 @@ end
 
 %% Convolution
 [m_I2, n_I2] = size(I2);                    % Dimensions of bordered Image
-J = ones(m_I,n_I);                          % Matrix the same size as final image (preallocated Matrix)
+J = ones(m_I,n_I);                          % Preallocated Matrix
 for j = 1:(n_I2 - n_H)+1                    % Runs over row
     for i = 1:(m_I2 - m_H)+1                % Runs through column
         M = round(sum(sum(double(H).*double(I2(i:i+m_H-1,j:j+n_H-1)))));	% Magic! (Convolution)
-        J(i,j) = M;                         % Adds every value to the new J Matrix
+        J(i,j) = M;                         % Each value into J Matrix
     end
 end
