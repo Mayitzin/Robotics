@@ -18,6 +18,7 @@
 %     09.07.2013. First implementation.
 %     24.01.2015. Updated comments.
 %                 Improved visualization of Parameters.
+%     30.01.2015. New Testing function.
 %
 % @author: Mario Garcia
 %     www.mayitzin.com
@@ -26,18 +27,17 @@ close all
 clc
 
 % Parameters
-coeff_deg  = 4;           % Coefficient degree
+coeff_deg  = 5;           % Coefficient degree
 param_orig = 2.*rand(1,coeff_deg+1)-1;  % Random parameters from -1 to 1
 
 % Define ranges for real and observed points
 X = -5:0.1:5;
-Y_real = polyval(param_orig, X);
-noise  = 2*randn(1,length(Y_real));
+Y_real = 0.02.*sin(X).*exp(X);        % Real function
+noise  = 0.1*randn(1,length(Y_real));
 Z = Y_real+noise;
 
 % Polynomial Regression
-%w = polyreg([X' Z'], coeff_deg, 'pinv');
-w = polyreg([X' Z']);
+w = polyreg([X' Z'], coeff_deg, 'pinv');
 Y_est = polyval(fliplr(w'), X);
 
 % Plotting
@@ -46,8 +46,3 @@ figure()
          X, Z, 'r*', ...
          X, Y_est, 'b-')
     legend('Real', 'Observations', 'Estimated')
-
-% Display Parameters
-B = [param_orig', flipud(w), abs(param_orig'-flipud(w))];
-disp(['     real       estimated      error'])
-disp(B)

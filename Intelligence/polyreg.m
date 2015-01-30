@@ -41,7 +41,7 @@ for i = 1:N
     end
 end
 
-% Get parameters (weights)
+% Estimate parameters (weights)
 if strcmp(method, 'pinv')
     w = pinv(Phi) * t;
 elseif strcmp(method, 'backslash')
