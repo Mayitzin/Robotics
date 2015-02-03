@@ -9,9 +9,9 @@
 %
 % OCTAVE users:
 % - With colored images GNU Octave Users require to download and install
-%   the 'image' package. In your Octave Command prompt try:
+%   the 'image' package. If not installed try in your Command prompt:
 %      pkg install image
-%   Once installed you must load it before using it with:
+%   Once installed you must load it before using it:
 %      pkg load image
 %   For more information visit:
 %      http://octave.sourceforge.net/image/index.html
