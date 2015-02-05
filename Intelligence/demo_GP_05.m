@@ -1,3 +1,9 @@
+% History:
+%     24.04.2014. First implementation.
+%
+% @author: Mario Garcia.
+%     www.mayitzin.com
+
 clear all; close all
 
 % Define Hyperparameters
@@ -8,7 +14,7 @@ hyppar = [ls; sig_f];
 sig_n = 0.3;
 
 % Testing points
-data = load('.\Trajectories\Trajectory01.txt');
+data = load('../Data/Trajectory01.txt');
 x_test = (1:size(data,2)-1)';
 y_test = abs(data(1,:))';
 y_test = diff(y_test);
@@ -24,7 +30,7 @@ Y = X(:,1:8:end);
 [post_mean, post_cov] = gp(X,Y,'RBF',hyppar,sig_n);
 % Variance on each point
 divls = diag(post_cov);
-%% Bayesian Optimization
+%% Bayesian Optimization (Expected Improvement)
 EI = eximp(X,Y,post_mean,post_cov);
 
 %% Plot
@@ -94,7 +100,7 @@ for i=1:trials
         ylabel('Expected Improvement')
 end
 
-% Extrema was found
+% Extremum was found
 [fmaxp,maxp] = max(post_mean);
 subplot(2,1,1); plot(X(1,maxp),fmaxp,'rx');
 disp(['Found: ', num2str(X(1,maxp)), '      ', num2str(fmaxp)]);
