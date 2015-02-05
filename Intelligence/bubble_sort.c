@@ -8,6 +8,10 @@
  *  See:
  *  [1] http://www.algolist.net/Algorithms/Sorting/Bubble_sort
  *  [2] https://www.youtube.com/watch?v=Cq7SMsQBEUw
+ *
+ *  History:
+ *      04.02.2015. First implementation.
+ *      05.02.2015. Chaged 'for' loop to 'while' condition.
  *  
  *  @author: Mario Garcia
  *  www.mayitzin.com
@@ -20,8 +24,8 @@
 int main(){
     char temp, s[100];
     int l, i, j;
-    bool swap=false;
-    
+    bool swap=true;
+
     scanf("%s", s);             // Read input string
     l = strlen(s);              // Length of string
     // If only one character, just print it back
@@ -29,23 +33,19 @@ int main(){
         printf("%c\n", s[0]);
     }
     // If chain of characters (string), sort them
-    else if (l>1){
-        for (j=0; j<=i^2; j++){ // Limit j=i^2 because O(n^2)
-            swap = false;
-            for (i=0; i<=l; i++) {
-                if ((s[i]>s[i+1]) && (s[i+1]!=0)) {
-                    temp = s[i+1];
-                    s[i+1] = s[i];
-                    s[i] = temp;
-                    swap = true;
-                }
+    while ((swap==true) && (l>1)){
+        swap = false;
+        for (i=0; i<=l-1; i++) {
+            if ((s[i]>s[i+1]) && (s[i+1]!=0)) {
+                temp = s[i+1];
+                s[i+1] = s[i];
+                s[i] = temp;
+                swap = true;
             }
-            if (swap==true){    // Print re-sorted chain
-                printf("%s\n", s);
-            }
-            else {
-                break;
-            }
+        }
+        // Print re-sorted chain
+        if (swap==true){
+            printf("%s\n", s);
         }
     }
 
