@@ -20,9 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#define MAX 100
 
 int main(){
-    char temp, s[100];
+    char temp, s[MAX];
     int l, i, j;
     bool swap=true;
 
