@@ -5,6 +5,8 @@
  * For example:
  * ./factorial 6
  *
+ * The maximum possible value is 20! It overflows with 21!
+ *
  * For further reference see:
  * [1] http://en.wikipedia.org/wiki/Factorial
  *
@@ -19,24 +21,38 @@
 #include <stdlib.h>
 #include <math.h>
 
-unsigned long factorial(int a);
+unsigned long long int factorial(int a);
 
 int main(int argc, char *argv[]){
-    unsigned long n;
+    int n;
+    unsigned long long int f;
     n = atoi(argv[1]);
 
+    // Check if it is negative
+    if (n<0){
+        printf("Sorry, factorials cannot be negative\n");
+        return 1;
+    }
+
+    // Start the looping
     printf("The factorial %lu! is obtained as:\n",n);
     for (int i=1; i<=n; i++){
-        printf("%u\t%lu\n", i, factorial(i));
+        printf("%u\t%llu\n", i, factorial(i));
     }
 
     return 0;
 }
 
-unsigned long factorial(int a){
-    unsigned long f = 1;
-    for(int count=1;count<=a; count++){
-        f*=count;
+unsigned long long int factorial(int a){
+    // This function computes the factorial of the int a
+    if (a<0){
+        printf("Sorry, factorials cannot be negative\n");
+        return 0;
+    } else {
+        unsigned long long int f = 1;
+        for(int count=1;count<=a; count++){
+            f*=count;
+        }
+        return f;
     }
-    return f;
 }
