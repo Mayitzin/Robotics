@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
         nomin = factorial(4*i)*(1103 + 26390*(double)i);
         denom = pow((double)factorial(i),4)*pow(396.0,(double)(4*(double)i));
         s = nomin/denom;
-        printf("%u\t%f\t%lu\t%lu\n", i, (double)i, factorial(i)), s;
+        printf("%u\t%f\t%lu\t%lu\n", i, (double)i, factorial(i), s);
     }
     printf("The sum is %lf\n", s);
 
