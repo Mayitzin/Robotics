@@ -1,8 +1,8 @@
-/* CSV files reader
- * This is a simple CSV file reader
+/* Hodor Translator
  * 
  * History:
- *     13.03.2015. First implementation.
+ *     08.04.2015. First implementation.
+ *     13.04.2015. Using memory allocation for string.
  *
  * @author: Mario Garcia
  * www.mayitzin.com
