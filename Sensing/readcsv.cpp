@@ -13,7 +13,6 @@
 #include <fstream>
 #include <string>
 
-#define FILE_LENGTH 5           // Num of lines per file
 #define MAX_FILE_LENGTH 500     // Max num of lines per file
 
 using namespace std;
