@@ -25,3 +25,11 @@ The code in C++ is compiled using the Standard C++11. For example with the GCC y
 ```
 g++ file.cpp -std=c++11 -o output
 ```
+
+For Windows users a statical linking problem might appear. To avoid this you can directly link statically with:
+
+```
+g++ file.cpp -std=c++11 -static-libgcc -static-libstdc++ -o output
+```
+
+This solution **does not apply to GNU-based system** (like Linux), as there it links with the static version of libgcc by default.
