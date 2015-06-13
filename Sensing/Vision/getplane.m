@@ -1,6 +1,12 @@
-%GETPLANE returns estimates the parameters of a plane.
-%   cnv(IMAGE,H,BORDER) gets the image and applies a convolution with the
-%   given M-by-N matrix H to obtain the filtered image J.
+%GETPLANE estimates the parameters of a plane, given two or three points.
+%   p = getplane(x1n,x2n) returns a 4-by-1 vector with the elements of the
+%   parameters that build a plane that goes through the origin. The two given
+%   3-by-1 vectors x1n and x2n are 3D points and, along with the origin, lie on
+%   this plane.
+%
+%   p = getplane(x1n,x2n,x3n) returns a 4-by-1 vecotr with the elements of the
+%   parameters that build a plane that goes through the three given points x1n,
+%   x2n and x3n.
 %
 % For futher reference see:
 %   [1] Hartley, R. and Zisserman, A. Multiple View Geometry in Computer
@@ -11,6 +17,7 @@
 %       26.01.2015. Added Comments and References.
 %                   Visualization is optional.
 %                   Third point is the Origin, when only two are given.
+%       13.06.2015. Corrected description.
 %
 % @author: Mario Garcia.
 %     www.mayitzin.com
