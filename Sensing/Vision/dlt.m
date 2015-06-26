@@ -1,3 +1,21 @@
+%DLT applies the basic Direct Lineat Transformation
+%   dlt(x1,x2) computes the 
+%
+% For futher reference see:
+%   [1] Hartley, R. and Zisserman, A. Multiple View Geometry in Computer
+%       Vision. Cambridge University Press. 2nd Ed. pages 88-91. 2004.
+%   [2] Szeliski, R. Computer Vision: Algorithms and Applications.
+%       Springer, pages 321-324. 2010.
+%   [3] Prince, Simon J D. Computer Vision Models Learning and Inference.
+%       Cambridge University Press. Pages 400-401. 2001.
+%
+% History:
+%     12.05.2012. First Implementation.
+%     27.06.2015. Updated information.
+%
+% @author: Mario Garcia.
+%     www.mayitzin.com
+
 function H = dlt(X1,X2)
 
 [N, n1] = size(X1);                     % Number of points
