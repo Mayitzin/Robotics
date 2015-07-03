@@ -1,7 +1,7 @@
-% Practical example of the "Harris Corner Detector" Algorithm
+% Practical example of the "Harris-Laplace Corner Detector" Algorithm
 %
 % This code plots each step estimating the corners in an image using the
-% "Harris Corner Detector" Algorithm.
+% "Harris-Laplace Corner Detector" Algorithm.
 %
 % Requires Files:
 % - gauss2D.m
@@ -23,13 +23,19 @@
 %   [2] C. Harris and M.J. Stephens. A combined corner and edge detector.
 %       Alvey Vision Conference, pages 147–152, 1988.
 %   [3] Szeliski, R. Computer Vision: Algorithms and Applications.
-%       Springer, pages 209-214. 2010.
+%       Springer, pages 212-214. 2010.
+%   [4] Prince, S.J.D. Computer Vision Models, Learning and Inference.
+%       Cambridge University Press. Pag. 339. 2012.
+%   [5] Mikolajczyk, K. and Schmid, C. An affine invariant interest point
+%       detector. European Conference on Computer Vision (ECCV '02). 2002.
 %
 % History:
 %     12.05.2012. First Implementation.
 %     29.11.2012. Using customized Gaussian Filter (gauss2D).
 %     23.01.2015. Updated information for Octave.
 %                 Added comments.
+%     03.07.2015. Corrected name to "Harris-Laplace".
+%                 Added reference of Harris-Laplace algorithm.
 %
 % @author: Mario Garcia.
 %     www.mayitzin.com
