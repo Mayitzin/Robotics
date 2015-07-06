@@ -22,6 +22,7 @@ History:
     03.07.2015. Structure Tensor built.
                 Simplified algorithm.
                 Added References, and coding settings.
+    07.07.2015. Detection of working OS.
 
 @author: Mario Garcia
 www.mayitzin.com
@@ -31,9 +32,13 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import scipy.ndimage as scimg
 import numpy as np
+import platform
 
 # Read Image
-im = mpimg.imread(r'..\..\Data\harris.png')	# On Windows
+if platform.system()=="Windows":
+    im = mpimg.imread(r'..\..\Data\harris.png')
+elif platform.system()=="Linux":
+    im = mpimg.imread('../../Data/harris.png')
 m, n, C = np.shape(im)
 # Convert to grayscale if Image is RGB-channel
 if C >= 3:
