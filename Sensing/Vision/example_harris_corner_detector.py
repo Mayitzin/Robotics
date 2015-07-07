@@ -23,6 +23,7 @@ History:
                 Simplified algorithm.
                 Added References, and coding settings.
     07.07.2015. Detection of working OS.
+                Conversion from RGB to grayscale now conforms CIE 1931.
 
 @author: Mario Garcia
 www.mayitzin.com
@@ -43,7 +44,7 @@ m, n, C = np.shape(im)
 # Convert to grayscale if Image is RGB-channel
 if C >= 3:
     r, g, b = im[:,:,0], im[:,:,1], im[:,:,2]
-    im = 0.2989*r + 0.5870*g + 0.1140*b
+    im = 0.2126*r + 0.7152*g + 0.0722*b
 
 # Convolve Image with derivative filters.
 df = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])
