@@ -24,6 +24,8 @@ History:
                 Added References, and coding settings.
     07.07.2015. Detection of working OS.
                 Conversion from RGB to grayscale now conforms CIE 1931.
+    09.07.2015. Changed derivative mask to suggested by Harris and Stephens.
+                Using notation of Prewitt/Sobel operators.
 
 @author: Mario Garcia
 www.mayitzin.com
@@ -47,21 +49,21 @@ if C >= 3:
     im = 0.2126*r + 0.7152*g + 0.0722*b
 
 # Convolve Image with derivative filters.
-df = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])
-Lx = scimg.filters.convolve1d(im, df, axis=1)
-Ly = scimg.filters.convolve1d(im, df, axis=0)
+df = np.array([-1.0, 0.0, 1.0])
+Gx = scimg.filters.convolve1d(im, df, axis=1)
+Gy = scimg.filters.convolve1d(im, df, axis=0)
 # # Alternative filtering to original solution proposed by Harris
-# Lx = scimg.filters.gaussian_filter1d(im, 1.0, axis=1, order=1)
-# Ly = scimg.filters.gaussian_filter1d(im, 1.0, axis=0, order=1)
+# Gx = scimg.filters.gaussian_filter1d(im, 1.0, axis=1, order=1)
+# Gy = scimg.filters.gaussian_filter1d(im, 1.0, axis=0, order=1)
 
 # Outer products of Gradients
-Lx2 = scimg.filters.gaussian_filter1d(Lx**2, 1.0, order=0)
-Ly2 = scimg.filters.gaussian_filter1d(Ly**2, 1.0, order=0)
-Lxy = scimg.filters.gaussian_filter1d(Lx*Ly, 1.0, order=0)
+Lx2 = scimg.filters.gaussian_filter1d(Gx**2, 1.0, order=0)   # Labeled A
+Ly2 = scimg.filters.gaussian_filter1d(Gy**2, 1.0, order=0)   # Labeled B
+Lxy = scimg.filters.gaussian_filter1d(Gx*Gy, 1.0, order=0)   # Labeled C
 
 # Compute the Image Structure Tensor Matrix (Second Moment Matrix, Auto-Correlation Matrix)
 alpha = 0.1
-t = 1.0
+t = 0.1
 R, M = np.zeros((m,n)), np.zeros((m,n))
 for y in range(m):
     for x in range(n):
@@ -70,6 +72,7 @@ for y in range(m):
         R[y,x] = M[y,x]     # This is useless. Only to show thresholding
         if M[y,x]<t:
             M[y,x] = 0.0
+
 
 """
 Non-maxima Supression.
@@ -89,12 +92,12 @@ implot = plt.imshow(im, cmap='gray')
 plt.title('Original Image')
 plt.axis('off')
 plt.subplot(2,3,2)
-Lx_plot = plt.imshow(Lx, cmap='gray')
-plt.title('Filtered X-axis')
+Gx_plot = plt.imshow(Gx, cmap='gray')
+plt.title('Gradient along X-axis')
 plt.axis('off')
 plt.subplot(2,3,3)
-Ly_plot = plt.imshow(Ly, cmap='gray')
-plt.title('Filtered Y-axis')
+Gy_plot = plt.imshow(Gy, cmap='gray')
+plt.title('Gradient along Y-axis')
 plt.axis('off')
 plt.subplot(2,3,4)
 R_plot = plt.imshow(R, cmap='gray')
