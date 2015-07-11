@@ -60,19 +60,21 @@ Gy = scimg.filters.convolve1d(im, df, axis=0)
 Lx2 = scimg.filters.gaussian_filter1d(Gx**2, 1.0, order=0)   # Labeled A
 Ly2 = scimg.filters.gaussian_filter1d(Gy**2, 1.0, order=0)   # Labeled B
 Lxy = scimg.filters.gaussian_filter1d(Gx*Gy, 1.0, order=0)   # Labeled C
+Lx2 = scimg.filters.convolve1d(Gx**2, df, axis=1)
 
 # Compute the Image Structure Tensor Matrix (Second Moment Matrix, Auto-Correlation Matrix)
 alpha = 0.1
-t = 0.1
-R, M = np.zeros((m,n)), np.zeros((m,n))
+t = 0.05
+E, R = np.zeros((m,n)), np.zeros((m,n))
 for y in range(m):
     for x in range(n):
-        S = np.array([[Lx2[y,x], Lxy[y,x]], [Lxy[y,x], Ly2[y,x]]])
-        M[y,x] = np.linalg.det(S) - alpha*np.trace(S)**2
-        R[y,x] = M[y,x]     # This is useless. Only to show thresholding
-        if M[y,x]<t:
-            M[y,x] = 0.0
+        M = np.array([[Lx2[y,x], Lxy[y,x]], [Lxy[y,x], Ly2[y,x]]])
+        R[y,x] = np.linalg.det(M) - alpha*np.trace(M)**2
+        E[y,x] = R[y,x]     # This is useless. Only to show thresholding
+        if R[y,x]<t:
+            R[y,x] = 0.0
 
+# R[R<t]=0.0
 
 """
 Non-maxima Supression.
@@ -80,11 +82,11 @@ Based on Stackoverflow solution:
 http://stackoverflow.com/questions/3684484/peak-detection-in-a-2d-array
 """
 area = scimg.morphology.generate_binary_structure(2,2)
-lmax = scimg.filters.maximum_filter(M, footprint=area)==M
-bg = (M==0)
+lmax = scimg.filters.maximum_filter(R, footprint=area)==R
+bg = (R==0)
 e_bg = scimg.morphology.binary_erosion(bg, structure=area, border_value=1)
-detected_peaks = lmax - e_bg
-peaks = np.nonzero(detected_peaks)  # Array with coordinates of Points
+spots = lmax - e_bg
+peaks = np.nonzero(spots)  # Array with coordinates of Points
 
 # Show images in grayscale
 plt.subplot(2,3,1)
@@ -100,13 +102,13 @@ Gy_plot = plt.imshow(Gy, cmap='gray')
 plt.title('Gradient along Y-axis')
 plt.axis('off')
 plt.subplot(2,3,4)
-R_plot = plt.imshow(R, cmap='gray')
-plt.colorbar(R_plot)
+E_plot = plt.imshow(E, cmap='gray')
+plt.colorbar(E_plot)
 plt.title('Response (Cornerness)')
 plt.axis('off')
 plt.subplot(2,3,5)
-M_plot = plt.imshow(M, cmap='gray')
-plt.colorbar(M_plot)
+R_plot = plt.imshow(R, cmap='gray')
+plt.colorbar(R_plot)
 plt.title('Thresholded result')
 plt.axis('off')
 plt.subplot(2,3,6)
@@ -114,6 +116,5 @@ implot = plt.imshow(im, cmap='gray')
 p_plot = plt.plot(peaks[1], peaks[0], 'rx')
 plt.title('Detected Points')
 plt.axis('off')
-
 
 plt.show()
