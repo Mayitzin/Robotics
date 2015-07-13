@@ -1,18 +1,17 @@
 %PLOTCAM    Plot cameras in 3-D space.
-%   plotcam(E) takes the matrix of the extrinsic parameters of the camera
+%   plotcam(M) takes the matrix of the extrinsic parameters of the camera
 %   model and plots the camera at the corresponding pose specified by the
 %   parameters in the matrix.
 %
-%   E is the 3-by-4 matrix [R|T] containing the 6 parameters needed to
+%   M is the 3-by-4 matrix [R|T] containing the 6 parameters needed to
 %   specify the pose of the camera in 3-D space.
 %
-%   Information
-%   -----------
-%   	Code 2 of n
-%       Exercise Sheet: 6
-%       Tracking and Detection
-%       WS 2012/13
-%   Technische Universitaet Muenchen
+% History:
+%     12.05.2012. First Implementation.
+%     13.07.2015. Fixed references and comments.
+%
+% @author: Mario Garcia
+%     www.mayitzin.com
 
 function plotcam(M)
 
