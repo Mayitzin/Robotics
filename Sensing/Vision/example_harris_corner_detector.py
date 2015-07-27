@@ -36,6 +36,9 @@ import matplotlib.image as mpimg
 import scipy.ndimage as scimg
 import numpy as np
 import platform
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+import matplotlib.mlab as mlab
 
 # Read Image
 if platform.system()=="Windows":
@@ -48,23 +51,22 @@ if C >= 3:
     r, g, b = im[:,:,0], im[:,:,1], im[:,:,2]
     im = 0.2126*r + 0.7152*g + 0.0722*b
 
-# Convolve Image with derivative filters.
-df = np.array([-1.0, 0.0, 1.0])
-Gx = scimg.filters.convolve1d(im, df, axis=1)
-Gy = scimg.filters.convolve1d(im, df, axis=0)
-# # Alternative filtering to original solution proposed by Harris
-# Gx = scimg.filters.gaussian_filter1d(im, 1.0, axis=1, order=1)
-# Gy = scimg.filters.gaussian_filter1d(im, 1.0, axis=0, order=1)
+# # Convolve Image with derivative filters.
+# df = np.array([-1.0, 0.0, 1.0])
+# Gx = scimg.filters.convolve1d(im, df, axis=1)
+# Gy = scimg.filters.convolve1d(im, df, axis=0)
+# Alternative filtering to original solution proposed by Harris
+Gx = scimg.filters.gaussian_filter1d(im, 2.0, axis=1, order=1)
+Gy = scimg.filters.gaussian_filter1d(im, 2.0, axis=0, order=1)
 
 # Outer products of Gradients
-Lx2 = scimg.filters.gaussian_filter1d(Gx**2, 1.0, order=0)   # Labeled A
-Ly2 = scimg.filters.gaussian_filter1d(Gy**2, 1.0, order=0)   # Labeled B
-Lxy = scimg.filters.gaussian_filter1d(Gx*Gy, 1.0, order=0)   # Labeled C
-Lx2 = scimg.filters.convolve1d(Gx**2, df, axis=1)
+Lx2 = scimg.filters.gaussian_filter1d(Gx**2, 3.0, order=0)   # Labeled A
+Ly2 = scimg.filters.gaussian_filter1d(Gy**2, 3.0, order=0)   # Labeled B
+Lxy = scimg.filters.gaussian_filter1d(Gx*Gy, 3.0, order=0)   # Labeled C
 
 # Compute the Image Structure Tensor Matrix (Second Moment Matrix, Auto-Correlation Matrix)
-alpha = 0.1
-t = 0.05
+alpha = 0.05
+t = 0.01
 E, R = np.zeros((m,n)), np.zeros((m,n))
 for y in range(m):
     for x in range(n):
@@ -74,19 +76,37 @@ for y in range(m):
         if R[y,x]<t:
             R[y,x] = 0.0
 
-# R[R<t]=0.0
+
+# The histogram of the "Cornerness"
+n, bins, patches = plt.hist(E.flatten(), 255, normed=1, facecolor='green', alpha=0.75)
+plt.axis([np.min(E), np.max(E), 0, np.max(n)*1.05])
+plt.grid(True)
+plt.show()
+
+
+# # Plot the "Cornerness" as a 3D surface
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# X = np.arange(n)
+# Y = np.arange(m)
+# X, Y = np.meshgrid(X, Y)
+# surf = ax.plot_surface(X, Y, E, rstride=1, cstride=1, cmap=cm.coolwarm,
+#         linewidth=0, antialiased=False)
+# plt.show()
+
 
 """
 Non-maxima Supression.
 Based on Stackoverflow solution:
 http://stackoverflow.com/questions/3684484/peak-detection-in-a-2d-array
 """
-area = scimg.morphology.generate_binary_structure(2,2)
-lmax = scimg.filters.maximum_filter(R, footprint=area)==R
-bg = (R==0)
-e_bg = scimg.morphology.binary_erosion(bg, structure=area, border_value=1)
+area  = scimg.morphology.generate_binary_structure(2,2)
+lmax  = scimg.filters.maximum_filter(R, footprint=area)==R
+bg    = (R==0)
+e_bg  = scimg.morphology.binary_erosion(bg, structure=area, border_value=1)
 spots = lmax - e_bg
 peaks = np.nonzero(spots)  # Array with coordinates of Points
+
 
 # Show images in grayscale
 plt.subplot(2,3,1)
@@ -116,5 +136,4 @@ implot = plt.imshow(im, cmap='gray')
 p_plot = plt.plot(peaks[1], peaks[0], 'rx')
 plt.title('Detected Points')
 plt.axis('off')
-
 plt.show()
