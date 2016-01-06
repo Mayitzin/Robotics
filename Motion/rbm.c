@@ -17,7 +17,7 @@ int dim_x, dim_y;
 
 int * initZeros(int y, int x);
 float * eye(int x);
-void printMatrix(int *matrix);
+void printMatrix(int *matrix, int dim_x, int dim_y);
 void printMatrixf(float *matrix, int dim_x, int dim_y);
 void printMatrixElems(int *matrix);
 
@@ -30,9 +30,9 @@ int main(int argc, char *argv[]){
         dim_x = size;
     }
 
-    float matrix[dim_x][dim_x];
+    float mat[dim_x][dim_x];
     float *m_ptr;
-    m_ptr = &matrix[0][0];
+    m_ptr = &mat[0][0];
     int i;
     for(i=0; i<(dim_x*dim_x); ++i){
         if (i%(dim_x+1)) {
@@ -40,15 +40,33 @@ int main(int argc, char *argv[]){
         } else {
             *(m_ptr+i) = 1.0f;}
     }
-    // for (i=0; i<(dim_x*dim_x); ++i){
-    //     printf("%2.4f\n", *(m_ptr+i));
-    // }
     printMatrixf(m_ptr, dim_x, dim_y);
+
+    float *m_ptr2;
+    m_ptr2 = eye(3);
+    // printMatrixf(m_ptr2, 3, 3); // <=== Does NOT print properly. CHECK!
 
     return (0);
 }
 
-void printMatrix(int *matrix){
+
+float * eye(int x){
+    float matrix[x][x];
+    float *matrix_p;
+    matrix_p = &matrix[0][0];
+    int i;
+    for(i=0; i<(x*x); ++i){
+        if (i%(x+1)) {
+            *(matrix_p+i) = 0.0f;
+        } else {
+            *(matrix_p+i) = 1.0f;}
+    }
+    matrix_p = &matrix[0][0];
+    printMatrixf(matrix_p, x, x);
+    return (matrix_p);
+}
+
+void printMatrix(int *matrix, int dim_x, int dim_y){
     int i, j;
     for(i=0; i<dim_y; ++i){
         for(j=0; j<dim_x; ++j){
@@ -72,7 +90,6 @@ void printMatrixf(float *matrix, int dim_x, int dim_y){
 
 void printMatrixElems(int *matrix){
     int i, j;
-    // Print the elements
     for(i=0; i<dim_y; ++i){
         for(j=0; j<dim_x; ++j){
             printf("0x%p : M[%d][%d] = %d\n", matrix, i, j, *matrix);
@@ -90,28 +107,5 @@ int * initZeros(int y, int x){
     for(i=0; i<(x*y); ++i){
         *(m_ptr+i) = 0;
     }
-    return (m_ptr);
-}
-
-float * eye(int x){
-    float matrix[x][x];
-    float *m_ptr;
-    m_ptr = &matrix[0][0];
-    int i;
-    // Set zeros for each element
-    for(i=0; i<(x*x); ++i){
-        if (i%4) {
-            *(m_ptr+i) = 1.0f;
-        } else {
-            *(m_ptr+i) = 0.0f;}
-    }
-
-    // // Set ones on the diagonal
-    // m_ptr = &matrix[0][0];
-    // *(m_ptr) = 1.0f;
-    // *(m_ptr+4) = 1.0f;
-    // *(m_ptr+8) = 1.0f;
-
-    m_ptr = &matrix[0][0];
     return (m_ptr);
 }
