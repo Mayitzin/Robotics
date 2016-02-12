@@ -39,10 +39,12 @@ def kf(xhat, z, A, P, Q, R, H):
 
 
 def function(x):
-	y = []
-	for i in range(len(x)):
-	    y.append( np.exp(np.sin(x[i])-np.cos(5.0*x[i])) )
-	return y
+    y = []
+    for i in range(len(x)):
+        # y.append( np.exp(np.sin(x[i])-np.cos(5.0*x[i])) )
+        # y.append( np.sin(5.0*x[i])/np.exp(x[i]) )
+        y.append( 2.0*np.sin(5.0*x[i])*np.cos(0.5*x[i]) )
+    return y
 
 
 n = 500
@@ -50,7 +52,7 @@ x = np.arange(0.,5.,5./n)
 y = np.array(function(x))
 
 # Added random noise
-mu, sigma = 0, 1.5
+mu, sigma = 0, 0.2
 s = np.random.normal(mu, sigma, n)
 r = y + s
 
