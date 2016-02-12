@@ -11,6 +11,7 @@ www.mayitzin.com
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 import scipy.linalg as lin
 
 
@@ -36,4 +37,19 @@ def kf(xhat, z, A, P, Q, R, H):
     P    = np.dot((I - np.dot(K, H)), P)
     return xhat, P
 
-print "First Draft"
+
+def function(x):
+	y = []
+	for i in range(len(x)):
+	    y.append( np.exp(np.sin(x[i])-np.cos(5.0*x[i])) )
+	return y
+
+
+n = 200
+x = np.arange(0.,5.,5./n)
+y = function(x)
+
+print np.shape(x)
+
+plt.plot(x,y)
+plt.show()
