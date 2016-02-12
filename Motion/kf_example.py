@@ -40,10 +40,7 @@ def kf(xhat, z, A, P, Q, R, H):
 
 def function(x):
     y = []
-    for i in range(len(x)):
-        # y.append( np.exp(np.sin(x[i])-np.cos(5.0*x[i])) )
-        # y.append( np.sin(5.0*x[i])/np.exp(x[i]) )
-        y.append( 2.0*np.sin(5.0*x[i])*np.cos(0.5*x[i]) )
+    [y.append( 2.0*np.sin(5.0*x[i])*np.cos(0.5*x[i]) ) for i in range(len(x))]
     return y
 
 
