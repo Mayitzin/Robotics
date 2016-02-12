@@ -45,11 +45,15 @@ def function(x):
 	return y
 
 
-n = 200
+n = 500
 x = np.arange(0.,5.,5./n)
-y = function(x)
+y = np.array(function(x))
 
-print np.shape(x)
+# Added random noise
+mu, sigma = 0, 1.5
+s = np.random.normal(mu, sigma, n)
+r = y + s
 
 plt.plot(x,y)
+plt.plot(x,r,'r.')
 plt.show()
