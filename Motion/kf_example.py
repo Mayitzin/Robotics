@@ -77,15 +77,9 @@ Q2, R3 = 0.5, 1.0
 Q3, R3 = 1.0, 1.0
 
 # Run the KF
-for i in range(n): xhat[0,i], P = kf(xhat[0,i].flatten(), z[i], A, P, Q1, R1, H)
-for i in range(n): xhat[1,i], P = kf(xhat[1,i].flatten(), z[i], A, P, Q2, R1, H)
-for i in range(n): xhat[2,i], P = kf(xhat[2,i].flatten(), z[i], A, P, Q3, R1, H)
-for i in range(n): xhat[3,i], P = kf(xhat[3,i].flatten(), z[i], A, P, Q1, R2, H)
-for i in range(n): xhat[4,i], P = kf(xhat[4,i].flatten(), z[i], A, P, Q2, R2, H)
-for i in range(n): xhat[5,i], P = kf(xhat[5,i].flatten(), z[i], A, P, Q3, R2, H)
-for i in range(n): xhat[6,i], P = kf(xhat[6,i].flatten(), z[i], A, P, Q1, R3, H)
-for i in range(n): xhat[7,i], P = kf(xhat[7,i].flatten(), z[i], A, P, Q2, R3, H)
-for i in range(n): xhat[8,i], P = kf(xhat[8,i].flatten(), z[i], A, P, Q3, R3, H)
+for Q in sigmas:
+    for R in sigmas:
+        for i in range(n): xhat[0,i], P = kf(xhat[0,i].flatten(), z[i], A, P, Q, R, H)
 
 # # Plot the results
 # plt.subplot(3,3,1)
@@ -142,9 +136,9 @@ for i in range(n): xhat[8,i], P = kf(xhat[8,i].flatten(), z[i], A, P, Q3, R3, H)
 # plt.plot(x,xhat9,'g')
 # plt.title('Q = 1.0 and R = 1.0')
 
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat[8,:],'g')
-plt.title('Q = 1.0 and R = 1.0')
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat[8,:],'g')
+# plt.title('Q = 1.0 and R = 1.0')
 
-plt.show()
+# plt.show()
