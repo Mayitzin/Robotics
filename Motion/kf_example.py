@@ -63,82 +63,19 @@ H = np.array([[1.0]])
 sigmas = np.array([0.1, 0.5, 1.0])
 m = len(sigmas)
 xhat = np.zeros((m*m,n))
-# xhat1, xhat2, xhat3 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
-# xhat4, xhat5, xhat6 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
-# xhat7, xhat8, xhat9 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
-Q1, R1 = 0.1, 0.1
-Q2, R1 = 0.5, 0.1
-Q3, R1 = 1.0, 0.1
-Q1, R2 = 0.1, 0.5
-Q2, R2 = 0.5, 0.5
-Q3, R2 = 1.0, 0.5
-Q1, R3 = 0.1, 1.0
-Q2, R3 = 0.5, 1.0
-Q3, R3 = 1.0, 1.0
 
 # Run the KF
+j = 0
 for Q in sigmas:
     for R in sigmas:
-        for i in range(n): xhat[0,i], P = kf(xhat[0,i].flatten(), z[i], A, P, Q, R, H)
+        for i in range(n): xhat[j,i], P = kf(xhat[j,i].flatten(), z[i], A, P, Q, R, H)
+        j+=1
 
-# # Plot the results
-# plt.subplot(3,3,1)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat1,'g')
-# plt.title('Q = 0.1 and R = 0.1')
+for i in range(m*m):
+    plt.subplot(m,m,i+1)
+    plt.plot(x,r,'r.')
+    plt.plot(x,y,'k--')
+    plt.plot(x,xhat[i,:],'g')
+    # plt.title('Q = 1.0 and R = 1.0')
 
-# plt.subplot(3,3,2)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat2,'g')
-# plt.title('Q = 0.5 and R = 0.1')
-
-# plt.subplot(3,3,3)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat3,'g')
-# plt.title('Q = 1.0 and R = 0.1')
-
-# plt.subplot(3,3,4)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat4,'g')
-# plt.title('Q = 0.1 and R = 0.5')
-
-# plt.subplot(3,3,5)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat5,'g')
-# plt.title('Q = 0.5 and R = 0.5')
-
-# plt.subplot(3,3,6)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat6,'g')
-# plt.title('Q = 1.0 and R = 0.5')
-
-# plt.subplot(3,3,7)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat7,'g')
-# plt.title('Q = 0.1 and R = 1.0')
-
-# plt.subplot(3,3,8)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat8,'g')
-# plt.title('Q = 0.5 and R = 1.0')
-
-# plt.subplot(3,3,9)
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat9,'g')
-# plt.title('Q = 1.0 and R = 1.0')
-
-# plt.plot(x,y,'k--')
-# plt.plot(x,r,'r.')
-# plt.plot(x,xhat[8,:],'g')
-# plt.title('Q = 1.0 and R = 1.0')
-
-# plt.show()
+plt.show()
