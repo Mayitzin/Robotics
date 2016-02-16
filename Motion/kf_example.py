@@ -60,9 +60,11 @@ P = np.array([[1.0]])
 H = np.array([[1.0]])
 
 # Variable elements of KF
-xhat1, xhat2, xhat3 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
-xhat4, xhat5, xhat6 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
-xhat7, xhat8, xhat9 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
+m = 9
+xhat = np.zeros((m,n))
+# xhat1, xhat2, xhat3 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
+# xhat4, xhat5, xhat6 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
+# xhat7, xhat8, xhat9 = np.zeros((n,1)), np.zeros((n,1)), np.zeros((n,1))
 Q1, R1 = 0.1, 0.1
 Q2, R1 = 0.5, 0.1
 Q3, R1 = 1.0, 0.1
@@ -74,69 +76,84 @@ Q2, R3 = 0.5, 1.0
 Q3, R3 = 1.0, 1.0
 
 # Run the KF
-for i in range(n): xhat1[i], P = kf(xhat1[i], z[i], A, P, Q1, R1, H)
-for i in range(n): xhat2[i], P = kf(xhat2[i], z[i], A, P, Q2, R1, H)
-for i in range(n): xhat3[i], P = kf(xhat3[i], z[i], A, P, Q3, R1, H)
-for i in range(n): xhat4[i], P = kf(xhat4[i], z[i], A, P, Q1, R2, H)
-for i in range(n): xhat5[i], P = kf(xhat5[i], z[i], A, P, Q2, R2, H)
-for i in range(n): xhat6[i], P = kf(xhat6[i], z[i], A, P, Q3, R2, H)
-for i in range(n): xhat7[i], P = kf(xhat7[i], z[i], A, P, Q1, R3, H)
-for i in range(n): xhat8[i], P = kf(xhat8[i], z[i], A, P, Q2, R3, H)
-for i in range(n): xhat9[i], P = kf(xhat9[i], z[i], A, P, Q3, R3, H)
+# for i in range(n): xhat1[i], P = kf(xhat1[i], z[i], A, P, Q1, R1, H)
+# for i in range(n): xhat2[i], P = kf(xhat2[i], z[i], A, P, Q2, R1, H)
+# for i in range(n): xhat3[i], P = kf(xhat3[i], z[i], A, P, Q3, R1, H)
+# for i in range(n): xhat4[i], P = kf(xhat4[i], z[i], A, P, Q1, R2, H)
+# for i in range(n): xhat5[i], P = kf(xhat5[i], z[i], A, P, Q2, R2, H)
+# for i in range(n): xhat6[i], P = kf(xhat6[i], z[i], A, P, Q3, R2, H)
+# for i in range(n): xhat7[i], P = kf(xhat7[i], z[i], A, P, Q1, R3, H)
+# for i in range(n): xhat8[i], P = kf(xhat8[i], z[i], A, P, Q2, R3, H)
+# for i in range(n): xhat9[i], P = kf(xhat9[i], z[i], A, P, Q3, R3, H)
 
-# Plot the results
-plt.subplot(3,3,1)
+for i in range(n): xhat[0,i], P = kf(xhat[0,i].flatten(), z[i], A, P, Q1, R1, H)
+for i in range(n): xhat[1,i], P = kf(xhat[1,i].flatten(), z[i], A, P, Q2, R1, H)
+for i in range(n): xhat[2,i], P = kf(xhat[2,i].flatten(), z[i], A, P, Q3, R1, H)
+for i in range(n): xhat[3,i], P = kf(xhat[3,i].flatten(), z[i], A, P, Q1, R2, H)
+for i in range(n): xhat[4,i], P = kf(xhat[4,i].flatten(), z[i], A, P, Q2, R2, H)
+for i in range(n): xhat[5,i], P = kf(xhat[5,i].flatten(), z[i], A, P, Q3, R2, H)
+for i in range(n): xhat[6,i], P = kf(xhat[6,i].flatten(), z[i], A, P, Q1, R3, H)
+for i in range(n): xhat[7,i], P = kf(xhat[7,i].flatten(), z[i], A, P, Q2, R3, H)
+for i in range(n): xhat[8,i], P = kf(xhat[8,i].flatten(), z[i], A, P, Q3, R3, H)
+
+# # Plot the results
+# plt.subplot(3,3,1)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat1,'g')
+# plt.title('Q = 0.1 and R = 0.1')
+
+# plt.subplot(3,3,2)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat2,'g')
+# plt.title('Q = 0.5 and R = 0.1')
+
+# plt.subplot(3,3,3)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat3,'g')
+# plt.title('Q = 1.0 and R = 0.1')
+
+# plt.subplot(3,3,4)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat4,'g')
+# plt.title('Q = 0.1 and R = 0.5')
+
+# plt.subplot(3,3,5)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat5,'g')
+# plt.title('Q = 0.5 and R = 0.5')
+
+# plt.subplot(3,3,6)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat6,'g')
+# plt.title('Q = 1.0 and R = 0.5')
+
+# plt.subplot(3,3,7)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat7,'g')
+# plt.title('Q = 0.1 and R = 1.0')
+
+# plt.subplot(3,3,8)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat8,'g')
+# plt.title('Q = 0.5 and R = 1.0')
+
+# plt.subplot(3,3,9)
+# plt.plot(x,y,'k--')
+# plt.plot(x,r,'r.')
+# plt.plot(x,xhat9,'g')
+# plt.title('Q = 1.0 and R = 1.0')
+
 plt.plot(x,y,'k--')
 plt.plot(x,r,'r.')
-plt.plot(x,xhat1,'g')
-plt.title('Q = 0.1 and R = 0.1')
-
-plt.subplot(3,3,2)
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat2,'g')
-plt.title('Q = 0.5 and R = 0.1')
-
-plt.subplot(3,3,3)
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat3,'g')
-plt.title('Q = 1.0 and R = 0.1')
-
-plt.subplot(3,3,4)
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat4,'g')
-plt.title('Q = 0.1 and R = 0.5')
-
-plt.subplot(3,3,5)
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat5,'g')
-plt.title('Q = 0.5 and R = 0.5')
-
-plt.subplot(3,3,6)
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat6,'g')
-plt.title('Q = 1.0 and R = 0.5')
-
-plt.subplot(3,3,7)
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat7,'g')
-plt.title('Q = 0.1 and R = 1.0')
-
-plt.subplot(3,3,8)
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat8,'g')
-plt.title('Q = 0.5 and R = 1.0')
-
-plt.subplot(3,3,9)
-plt.plot(x,y,'k--')
-plt.plot(x,r,'r.')
-plt.plot(x,xhat9,'g')
+plt.plot(x,xhat[8,:],'g')
 plt.title('Q = 1.0 and R = 1.0')
 
 plt.show()
