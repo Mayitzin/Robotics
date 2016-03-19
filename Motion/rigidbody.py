@@ -128,7 +128,6 @@ def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.1, freq=100.
     qDot2 = 0.5*( q0*gx + q2*gz - q3*gy)
     qDot3 = 0.5*( q0*gy - q1*gz + q3*gx)
     qDot4 = 0.5*( q0*gz + q1*gy - q2*gx)
-
     # Compute feedback only if accelerometer measurement valid (avoids unvalid accelerometer values)
     if( !((ax==0.0) && (ay==0.0) && (az==0.0)) ):
         # Normalize accelerometers measurement
@@ -158,7 +157,7 @@ def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.1, freq=100.
         hx     =      mx*(q0q0 + q1q1 - q2q2 - q3q3)  - 2.0*my*(q0q3 - q1q2)               + 2.0*mz*(q0q2 + q1q3)
         hy     =  2.0*mx*(q0q3 + q1q2)                +     my*(q0q0 - q1q1 + q2q2 - q3q3) - 2.0*mz*(q0q1 - q2q3)
         hz     = -2.0*mx*(q0q2 - q1q3)                + 2.0*my*(q0q1 + q2q3)               +     mz*(q0q0 - q1q1 - q2q2 + q3q3)
-        hxhy   = sqrt(hx*hx + hy*hy)
+        hxhy   = np.sqrt(hx*hx + hy*hy)
         _2hxhy = 2.0*hxhy
         _2hz   = 2.0*hz
         _2qax  = 2.0*q1q3 - _2q0q2 - ax
@@ -195,7 +194,7 @@ def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.1, freq=100.
     q2 /= invsqrt
     q3 /= invsqrt
     # Return Numpy Array of updated Quaternion
-    return np.array([q0, q1, q2, q2])
+    return np.array([q0, q1, q2, q3])
 
 
 ## TEST FUNCTIONS ##
