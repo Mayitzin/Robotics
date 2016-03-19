@@ -194,6 +194,8 @@ def updateMARG(acc, gyr, mag, q, beta, freq=200.0):
     q1 /= invsqrt
     q2 /= invsqrt
     q3 /= invsqrt
+    # Return Numpy Array of updated Quaternion
+    return np.array([q0, q1, q2, q2])
 
 
 ## TEST FUNCTIONS ##
