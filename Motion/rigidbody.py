@@ -108,7 +108,7 @@ def invTrans(T):
     return np.vstack((np.hstack(( R.T, np.dot(-R.T,t))), np.array([0,0,0,1])))
 
 
-def updateMARG(acc, gyr, mag, q, beta, freq=200.0):
+def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.1, freq=100.0):
     """Implementation of Madgwick's AHRS algorithms with a MARG architecture.
 
     See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
