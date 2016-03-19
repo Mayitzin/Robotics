@@ -14,6 +14,7 @@ History:
     21.11.2014. Changed limit of chordal distance in test function.
     24.11.2014. Added test of Quaternions for a valid rotation R.
     28.01.2015. Separated from script "tracking.py".
+    19.03.2016. Added Madwicks' Algorithm.
 
 @author: Mario Garcia
 """
@@ -107,7 +108,7 @@ def invTrans(T):
     return np.vstack((np.hstack(( R.T, np.dot(-R.T,t))), np.array([0,0,0,1])))
 
 
-def updateMARG(ax, ay, az, gx, gy, gz, mx, my, mz):
+def updateMARG(acc, gyr, mag, q, freq=200.0):
     """Implementation of Madgwick's AHRS algorithms with a MARG architecture.
 
     See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
@@ -116,80 +117,84 @@ def updateMARG(ax, ay, az, gx, gy, gz, mx, my, mz):
     According to original source code, this adaptation to Python script is
     provided under the GNU General Public Licence.
     """
+    # Get elements from input
+    ax, ay, az = acc[0], acc[1], acc[2]
+    gx, gy, gz = gyr[0], gyr[1], gyr[2]
+    mx, my, mz = mag[0], mag[1], mag[2]
+    q0, q1, q2, q3 = q[0], q[1], q[2], q[3]
+    sampleFreq = freq
     # Rate of change of quaternion from gyroscope
-    qDot1 = 0.5f * (-q1*gx - q2*gy - q3*gz)
-    qDot2 = 0.5f * ( q0*gx + q2*gz - q3*gy)
-    qDot3 = 0.5f * ( q0*gy - q1*gz + q3*gx)
-    qDot4 = 0.5f * ( q0*gz + q1*gy - q2*gx)
+    qDot1 = 0.5*(-q1*gx - q2*gy - q3*gz)
+    qDot2 = 0.5*( q0*gx + q2*gz - q3*gy)
+    qDot3 = 0.5*( q0*gy - q1*gz + q3*gx)
+    qDot4 = 0.5*( q0*gz + q1*gy - q2*gx)
 
     # Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalization)
-    if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
+    if( !((ax==0.0) && (ay==0.0) && (az==0.0)) ):
         # Normalize accelerometers measurement
-        invsqrt = sqrt(ax * ax + ay * ay + az * az);
-        ax /= invsqrt;
-        ay /= invsqrt;
-        az /= invsqrt;
+        invsqrt = np.sqrt(ax * ax + ay * ay + az * az)
+        ax /= invsqrt
+        ay /= invsqrt
+        az /= invsqrt
 
         # Normalize magnetometers measurement
-        invsqrt = sqrt(mx * mx + my * my + mz * mz);
-        mx /= invsqrt;
-        my /= invsqrt;
-        mz /= invsqrt;
+        invsqrt = sqrt(mx * mx + my * my + mz * mz)
+        mx /= invsqrt
+        my /= invsqrt
+        mz /= invsqrt
 
         # Auxiliary variables to avoid repeated arithmetic
-        q0q0 = q0*q0;
-        q0q1 = q0*q1;
-        q0q2 = q0*q2;
-        q0q3 = q0*q3;
-        q1q1 = q1*q1;
-        q1q2 = q1*q2;
-        q1q3 = q1*q3;
-        q2q2 = q2*q2;
-        q2q3 = q2*q3;
-        q3q3 = q3*q3;
-        _2q0 = 2.0f * q0;
-        _2q1 = 2.0f * q1;
-        _2q2 = 2.0f * q2;
-        _2q3 = 2.0f * q3;
-        _2q0q2 = 2.0f * q0q2;
-        _2q2q3 = 2.0f * q2q3;
+        q0q0 = q0*q0
+        q0q1 = q0*q1
+        q0q2 = q0*q2
+        q0q3 = q0*q3
+        q1q1 = q1*q1
+        q1q2 = q1*q2
+        q1q3 = q1*q3
+        q2q2 = q2*q2
+        q2q3 = q2*q3
+        q3q3 = q3*q3
+        _2q0 = 2.0f * q0
+        _2q1 = 2.0f * q1
+        _2q2 = 2.0f * q2
+        _2q3 = 2.0f * q3
+        _2q0q2 = 2.0f * q0q2
+        _2q2q3 = 2.0f * q2q3
         # Reference direction of Earth's magnetic field
-        hx     =       mx*(q0q0 + q1q1 - q2q2 - q3q3) - 2.0f*my*(q0q3 - q1q2)               + 2.0f*mz*(q0q2 + q1q3);
-        hy     =  2.0f*mx*(q0q3 + q1q2)               +      my*(q0q0 - q1q1 + q2q2 - q3q3) - 2.0f*mz*(q0q1 - q2q3);
-        hz     = -2.0f*mx*(q0q2 - q1q3) + 2.0f * my * (q0q1 + q2q3) + mz * (q0q0 - q1q1 - q2q2 + q3q3);
-        hxhy   = sqrt(hx*hx + hy*hy);
-        _2hxhy = 2.0f*hxhy;
-        _2hz   = 2.0f*hz;
-        _2qax  = 2.0f*q1q3 - _2q0q2 - ax;
-        _2qay  = 2.0f*q0q1 + _2q2q3 - ay;
-        _4qaz  = 4.0f*(1 - 2.0f*q1q1 - 2.0f*q2q2 - az);
-        sumx = hxhy*(0.5f - q2q2 - q3q3) + hz*(q1q3 - q0q2)        - mx;
-        sumy = hxhy*(q1q2 - q0q3)        + hz*(q0q1 + q2q3)        - my;
-        sumz = hxhy*(q0q2 + q1q3)        + hz*(0.5f - q1q1 - q2q2) - mz;
+        hx     =       mx*(q0q0 + q1q1 - q2q2 - q3q3) - 2.0f*my*(q0q3 - q1q2)               + 2.0f*mz*(q0q2 + q1q3)
+        hy     =  2.0f*mx*(q0q3 + q1q2)               +      my*(q0q0 - q1q1 + q2q2 - q3q3) - 2.0f*mz*(q0q1 - q2q3)
+        hz     = -2.0f*mx*(q0q2 - q1q3) + 2.0f * my * (q0q1 + q2q3) + mz * (q0q0 - q1q1 - q2q2 + q3q3)
+        hxhy   = sqrt(hx*hx + hy*hy)
+        _2hxhy = 2.0f*hxhy
+        _2hz   = 2.0f*hz
+        _2qax  = 2.0f*q1q3 - _2q0q2 - ax
+        _2qay  = 2.0f*q0q1 + _2q2q3 - ay
+        _4qaz  = 4.0f*(1 - 2.0f*q1q1 - 2.0f*q2q2 - az)
+        sumx = hxhy*(0.5f - q2q2 - q3q3) + hz*(q1q3 - q0q2)        - mx
+        sumy = hxhy*(q1q2 - q0q3)        + hz*(q0q1 + q2q3)        - my
+        sumz = hxhy*(q0q2 + q1q3)        + hz*(0.5f - q1q1 - q2q2) - mz
         # Gradient decent algorithm corrective step
-        s0 = -_2q2*_2qax + _2q1*_2qay            - sumx*hz*q2                + sumy*(-hxhy*q3 + hz*q1) + sumz*hxhy*q2;
-        s1 =  _2q3*_2qax + _2q0*_2qay - q1*_4qaz + sumx*hz*q3                + sumy*( hxhy*q2 + hz*q0) + sumz*(hxhy*q3 - _2hz*q1);
-        s2 = -_2q0*_2qax + _2q3*_2qay - q2*_4qaz - sumx*( _2hxhy*q2 + hz*q0) + sumy*( hxhy*q1 + hz*q3) + sumz*(hxhy*q0 - _2hz*q2);
-        s3 =  _2q1*_2qax + _2q2*_2qay            + sumx*(-_2hxhy*q3 + hz*q1) + sumy*(-hxhy*q0 + hz*q2) + sumz*hxhy*q1;
+        s0 = -_2q2*_2qax + _2q1*_2qay            - sumx*hz*q2                + sumy*(-hxhy*q3 + hz*q1) + sumz*hxhy*q2
+        s1 =  _2q3*_2qax + _2q0*_2qay - q1*_4qaz + sumx*hz*q3                + sumy*( hxhy*q2 + hz*q0) + sumz*(hxhy*q3 - _2hz*q1)
+        s2 = -_2q0*_2qax + _2q3*_2qay - q2*_4qaz - sumx*( _2hxhy*q2 + hz*q0) + sumy*( hxhy*q1 + hz*q3) + sumz*(hxhy*q0 - _2hz*q2)
+        s3 =  _2q1*_2qax + _2q2*_2qay            + sumx*(-_2hxhy*q3 + hz*q1) + sumy*(-hxhy*q0 + hz*q2) + sumz*hxhy*q1
         # normalize step magnitude
-        invsqrt = sqrt(s0*s0 + s1*s1 + s2*s2 + s3*s3);
-        s0 /= invsqrt;
-        s1 /= invsqrt;
-        s2 /= invsqrt;
-        s3 /= invsqrt;
+        invsqrt = sqrt(s0*s0 + s1*s1 + s2*s2 + s3*s3)
+        s0 /= invsqrt
+        s1 /= invsqrt
+        s2 /= invsqrt
+        s3 /= invsqrt
         # Apply feedback step
-        if (touching==1) { beta=0.01f; }
-        else { beta=1.25f; }
         qDot1 -= beta*s0
         qDot2 -= beta*s1
         qDot3 -= beta*s2
         qDot4 -= beta*s3
 
     # Integrate rate of change of quaternion to yield quaternion
-    q0 += qDot1 / sampleFreq;
-    q1 += qDot2 / sampleFreq;
-    q2 += qDot3 / sampleFreq;
-    q3 += qDot4 / sampleFreq;
+    q0 += qDot1 / sampleFreq
+    q1 += qDot2 / sampleFreq
+    q2 += qDot3 / sampleFreq
+    q3 += qDot4 / sampleFreq
     # Normalize quaternion
     invsqrt = sqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3)
     q0 /= invsqrt
