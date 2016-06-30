@@ -16,24 +16,24 @@ def ber(X, p=0.5):
     Default is p = 0.5 to give a fair and equal distribution for each outcome.
 
     The probabilty mass function f over possible outcomes k, is:
-                /
-                | p        if k = 1
-    f(k ; p) = <
-                | 1 - p    if k = 0
-                \
+                ,-
+                |  p        if k = 1
+    f(k | p) = <
+                |  1 - p    if k = 0
+                `-
 
     also defined as:
 
-    f(k ; p) = p^k * (1-p)^(1-k)        for k in {0,1}
+    f(k | p) = p^k * (1-p)^(1-k)        for k in {0,1}
 
-    This function computes it with both methods
+    This function computes the distribution with both methods
 
     see:
     - https://en.wikipedia.org/wiki/Bernoulli_distribution
     - http://mathworld.wolfram.com/BernoulliDistribution.html
     """
-    f1 = np.zeros(np.shape(X))
-    f2 = np.zeros(np.shape(X))
+    f1 = np.zeros(np.shape(X))  # Result using first method
+    f2 = np.zeros(np.shape(X))  # Result using second method
     for k in range(len(X)):
         if X[k]==0:   f1[k] = 1.0-p
         elif X[k]==1: f1[k] = p
@@ -46,7 +46,36 @@ def ber(X, p=0.5):
     return f1, f2, mean, var, std
 
 
+def pdf(X, m=0.0, s=1.0):
+	"""Probability Density Function (Gaussian Distribution)
+	This function builds the probability density of the normal distribution:
+
+	pdf(X | m, s^2) = exp(-(x-m)^2/2*s^2) / sqrt(2*s^2*Pi)
+
+	where:
+	    m is the mean or expectation of the distribution.
+	        Default: m = 0.0
+	    s is the standard deviation.
+	        Default: s = 1.0
+	    s^2 is the variance.
+	        Default: s^2 = 1.0
+
+	see:
+	- https://en.wikipedia.org/wiki/Normal_distribution
+	"""
+    f = np.zeros(np.shape(X))
+    normalizer = 1.0/np.sqrt(2.0*s*s*np.pi)
+    for i in range(len(X)):
+        f[i] = normalizer * np.exp(-(X[i]-m)**2/(2.0*s*s))
+    return f
+
+
 def test_ber(n=5,p=0.5):
+    """Testing function for the Bernoulli distribution
+    Default:
+        n = 5      # Number of samples
+        p = 0.5    # Probability of success
+    """
     print "\nTest of Bernoulli Distribution"
     print "------------------------------"
     X = np.random.random_integers(0,1,size=(n))
@@ -58,4 +87,13 @@ def test_ber(n=5,p=0.5):
     print "  std = %.4f"%std
 
 
-test_ber(6,0.3)
+
+###### Testing the Functions ######
+
+# test_ber(1,0.3)
+
+# X = np.linspace(-4.0, 4.0, num=40)
+# Y = pdf(X)
+# import matplotlib.pyplot as plt
+# l1 = plt.plot(X, Y, 'r-')
+# plt.show()
