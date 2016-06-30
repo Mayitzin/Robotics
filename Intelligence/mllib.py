@@ -47,27 +47,31 @@ def ber(X, p=0.5):
 
 
 def pdf(X, m=0.0, s=1.0):
-	"""Probability Density Function (Gaussian Distribution)
-	This function builds the probability density of the normal distribution:
+    """Probability Density Function (Gaussian Distribution)
+    This function builds the probability density of the normal distribution:
 
-	pdf(X | m, s^2) = exp(-(x-m)^2/2*s^2) / sqrt(2*s^2*Pi)
+    pdf(X | m, s^2) = exp(-(x-m)^2/2*s^2) / sqrt(2*s^2*Pi)
 
-	where:
-	    m is the mean or expectation of the distribution.
-	        Default: m = 0.0
-	    s is the standard deviation.
-	        Default: s = 1.0
-	    s^2 is the variance.
-	        Default: s^2 = 1.0
+    where:
+        m is the mean or expectation of the distribution.
+            Default: m = 0.0
+        s is the standard deviation.
+            Default: s = 1.0
+        s^2 is the variance.
+            Default: s^2 = 1.0
 
-	see:
-	- https://en.wikipedia.org/wiki/Normal_distribution
-	"""
+    see:
+    - https://en.wikipedia.org/wiki/Normal_distribution
+    """
     f = np.zeros(np.shape(X))
     normalizer = 1.0/np.sqrt(2.0*s*s*np.pi)
     for i in range(len(X)):
         f[i] = normalizer * np.exp(-(X[i]-m)**2/(2.0*s*s))
     return f
+
+
+def softmax(z):
+    return np.exp(z)/np.sum(np.exp(z))
 
 
 def test_ber(n=5,p=0.5):
@@ -88,12 +92,24 @@ def test_ber(n=5,p=0.5):
 
 
 
+
 ###### Testing the Functions ######
 
-# test_ber(1,0.3)
+test_ber(5,0.3)
 
 # X = np.linspace(-4.0, 4.0, num=40)
 # Y = pdf(X)
 # import matplotlib.pyplot as plt
 # l1 = plt.plot(X, Y, 'r-')
+# plt.show()
+
+# from scipy.stats import multivariate_normal
+# x, y = np.mgrid[-1:1:0.01, -1:1:0.01]
+# pos = np.empty(x.shape + (2,))
+# pos[:,:,0] = x
+# pos[:,:,1] = y
+# mean = [0.5, -0.2]
+# cov = [[2.0, 0.3],[0.3, 0.5]]
+# rv = multivariate_normal(mean, cov)
+# plt.contourf(x,y,rv.pdf(pos))
 # plt.show()
