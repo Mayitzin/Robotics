@@ -3,6 +3,14 @@
  *
  * @author: Mario Garcia
  * www.mayitzin.com
+ *
+ * TODO:
+ *     Viete's Formula: https://en.wikipedia.org/wiki/Vi%C3%A8te%27s_formula
+ *
+ * see: https://en.wikipedia.org/wiki/Approximations_of_%CF%80
+ *
+ * @author: Mario Garcia
+ * www.mayitzin.com
 **/
 
 #include <stdio.h>
@@ -124,14 +132,15 @@ long double wallis(int N) {
  * see: http://www.davidhbailey.com/dhbpapers/pi-quest.pdf
 **/
 long double bailey(int K) {
-    double k;
+    double k, k8;
     double mon1, mon2, mon3, mon4;
     long double suma=0.0;
     for(k=0; k<=K; ++k) {
-        mon1 = (4.0/(8.0*k+1.0));
-        mon2 = (2.0/(8.0*k+4.0));
-        mon3 = (1.0/(8.0*k+5.0));
-        mon4 = (1.0/(8.0*k+6.0));
+    	k8 = 8.0*k;
+        mon1 = (4.0/(k8+1.0));
+        mon2 = (2.0/(k8+4.0));
+        mon3 = (1.0/(k8+5.0));
+        mon4 = (1.0/(k8+6.0));
         suma += (1/pow(16,k))*(mon1-mon2-mon3-mon4);
     }
     return suma;
