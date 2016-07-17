@@ -38,29 +38,29 @@ def kf(xhat, z, A, P, Q, R, H):
     return xhat, P
 
 
-def function(x):
+def function(x, w=[2.0, 5.0, 0.5]):
     y = []
-    [y.append( 2.0*np.sin(5.0*x[i])*np.cos(0.5*x[i]) ) for i in range(len(x))]
+    [y.append( w[0]*np.sin(w[1]*x[i])*np.cos(w[2]*x[i]) ) for i in range(len(x))]
     return y
 
 # Generate the points
-n = 500
+n = 250
 x = np.arange(0.,5.,5./n)
 y = np.array(function(x))
 
-# Added random noise
-mu, sigma = 0, 0.2
+# Add random noise
+mu, sigma = 0, 0.05
 s = np.random.normal(mu, sigma, n)
 r = y + s
 
 # Static elements of KF
-z = r.reshape((n,1))
+z = r.reshape((1,n))
 A = np.array([[1.0]])
 P = np.array([[1.0]])
 H = np.array([[1.0]])
 
 # Variable elements of KF
-sigmas = np.array([0.1, 0.5, 1.0])
+sigmas = sigma*np.array([0.1, 0.5, 1.0])
 m = len(sigmas)
 xhat = np.zeros((m*m,n))
 
@@ -68,7 +68,7 @@ xhat = np.zeros((m*m,n))
 j = 0
 for Q in sigmas:
     for R in sigmas:
-        for i in range(n): xhat[j,i], P = kf(xhat[j,i].flatten(), z[i], A, P, Q, R, H)
+        for i in range(n): xhat[j,i], P = kf(xhat[j,i].flatten(), z[:,i], A, P, Q, R, H)
         j+=1
 
 for i in range(m*m):
