@@ -39,6 +39,10 @@ def ber(X, p=0.5):
     return f, mean, var, std
 
 
+def Bin(m, N, p):
+    return binomialCoefficient(N, m) * p**m * (1.0-p)**(N-m)
+
+
 def pdf(X, m=0.0, s=1.0):
     """Probability Density Function (Gaussian Distribution)
     This function builds the probability density of the normal distribution:
@@ -68,13 +72,15 @@ def sigmoid(x):
 
 
 def binomialCoefficient(n, k):
-    if 0<=k<n:
-        b = 1
-        for i in range(k):
-            b = b * (n-i)/(i+1)
-        return b
-    else:
+    if k<0 or k>n:
         return 0
+    if k==0 or k==n:
+        return 1
+    k = min(k, n-k)
+    c = 1
+    for i in range(k):
+        c = c*(n-i)/(i+1)
+    return c
 
 
 def softmax(z):
@@ -101,13 +107,17 @@ def test_ber(n=5,p=0.5):
 
 
 ###### Testing the Functions ######
-
+# Test the Bernoulli Distribution
 p = 0.3
 test_ber(5,p)
 
-n = 4
-k = 2
-print binomialCoefficient(n, k)
+# Test Binomial Distribution
+N = 6
+m = 6
+p = 0.3
+print "\nProbability of achieving %d heads after %d tosses, with u=%.2f" % (m, N, p)
+for m in range(N+1):
+    print "  Pr(%d heads) = f(%d) = Pr(X=%d) = %f" %(m, m, m, Bin(m, N, p) )
 
 # X = np.linspace(-4.0, 4.0, num=40)
 # Y = pdf(X)
