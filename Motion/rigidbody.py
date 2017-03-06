@@ -21,6 +21,10 @@ History:
 
 import numpy as np
 import scipy.linalg as lin
+import platform
+
+# Check OS
+LINUX = platform.system() == 'Linux'
     
     
 def rotate(ex,ey,ez):
@@ -82,7 +86,7 @@ def hmtrans(R,t):
     where R is a 3-by-3 rotation matrix and t is the 3-translation vector.
     """
     T = np.vstack((np.hstack((R,t)),np.array([0,0,0,1])))
-    return  T.astype(np.)
+    return  T.astype(np.float)
 
 
 def dchord(R1,R2):
@@ -129,7 +133,7 @@ def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.1, freq=100.
     qDot3 = 0.5*( q0*gy - q1*gz + q3*gx)
     qDot4 = 0.5*( q0*gz + q1*gy - q2*gx)
     # Compute feedback only if accelerometer measurement valid (avoids unvalid accelerometer values)
-    if( !((ax==0.0) && (ay==0.0) && (az==0.0)) ):
+    if( not((ax==0.0) & (ay==0.0) & (az==0.0)) ):
         # Normalize accelerometers measurement
         invsqrt = np.sqrt(ax*ax + ay*ay + az*az)
         ax /= invsqrt
@@ -200,14 +204,16 @@ def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.1, freq=100.
 ## TEST FUNCTIONS ##
 
 # Format Output in Terminal (ANSI Escape Sequences)
-class bcolors:
-    HEAD = '\033[95m'       # Header (purple)
-    ENBL = '\033[94m'       # Enabling a mode (Blue)
-    OKGR = '\033[92m'       # OK message (Green)
-    WARN = '\033[93m'       # Warning message (Yellow)
-    FAIL = '\033[91m'       # FAIL message (Red)
-    ENDC = '\033[0m'        # End formatting
+class Texter:
+    HEAD = '\033[95m' if LINUX else '' # Header (purple)
+    ENBL = '\033[94m' if LINUX else '' # Enabling a mode (Blue)
+    OKGR = '\033[92m' if LINUX else '' # OK message (Green)
+    WARN = '\033[93m' if LINUX else '' # Warning message (Yellow)
+    FAIL = '\033[91m' if LINUX else '' # FAIL message (Red)
+    ENDC = '\033[0m'  if LINUX else '' # End formatting
 
+    MSG_OK = OKGR+"OK"+ENDC
+    MSG_NO = FAIL+"NO"+ENDC
 
 def test_Rotation(space='Euler',debug=False):
     """
@@ -244,9 +250,9 @@ def test_Rotation(space='Euler',debug=False):
             print " det(R) = %1.4f" % detR
     # Test if det(R)=+1 and R^T*R=I
     if ((detR-1.0) < 1e-9) and ((np.trace(np.dot(R.T, R))-3.0) < 1e-9):
-        print "- Valid construction of rotation matrix ................ [",bcolors.OKGR+"OK"+bcolors.ENDC,"]"
+        print "- Valid construction of rotation matrix ................ [",Texter.MSG_OK,"]"
     else:
-        print "- Valid construction of rotation matrix ................ [",bcolors.FAIL+"NO"+bcolors.ENDC,"]"
+        print "- Valid construction of rotation matrix ................ [",Texter.MSG_NO,"]"
 
 
 def test_ChordalDist(debug=False):
@@ -271,9 +277,9 @@ def test_ChordalDist(debug=False):
         print "Chordal distance =", d
     # Test if Chordal distance is within the valid range
     if 0.0 <= d:
-        print "- Valid distance between two rotation matrices ......... [",bcolors.OKGR+"OK"+bcolors.ENDC,"]"
+        print "- Valid distance between two rotation matrices ......... [",Texter.MSG_OK,"]"
     else:
-        print "- Valid distance between two rotation matrices ......... [",bcolors.FAIL+"NO"+bcolors.ENDC,"]"
+        print "- Valid distance between two rotation matrices ......... [",Texter.MSG_NO,"]"
 
 
 ## MAIN EXECUTION as a script ##
@@ -289,9 +295,9 @@ if __name__ == "__main__":
         mode = sys.argv[1]
         if mode == "--debug":
             dmode = True
-            print bcolors.ENBL+"Debug mode is ON"+bcolors.ENDC
+            print Texter.ENBL+"Debug mode is ON"+Texter.ENDC
         else:
-            print bcolors.WARN+"Given parameter is not valid.\nProceeding with default values."+bcolors.ENDC
+            print Texter.WARN+"Given parameter is not valid.\nProceeding with default values."+Texter.ENDC
 
     # Start Running Tests in given mode
     print "Running tests... "
