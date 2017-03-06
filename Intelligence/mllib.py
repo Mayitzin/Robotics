@@ -24,7 +24,7 @@ def ber(X, p=0.5):
 
     also defined as:
 
-    f(k | p) = p^k * (1-p)^(1-k)        for k in {0,1}
+    f(k | p) = p^k * (1 - p)^(1-k)        for k in {0,1}
 
     see:
     - https://en.wikipedia.org/wiki/Bernoulli_distribution
@@ -67,6 +67,16 @@ def sigmoid(x):
     return 1./(1+np.exp(-x))
 
 
+def binomialCoefficient(n, k):
+    if 0<=k<n:
+        b = 1
+        for i in range(k):
+            b = b * (n-i)/(i+1)
+        return b
+    else:
+        return 0
+
+
 def softmax(z):
     return np.exp(z)/np.sum(np.exp(z))
 
@@ -83,9 +93,9 @@ def test_ber(n=5,p=0.5):
     print "X = %d random sampled outcomes (Bernoulli trials) =\n"%(n), X
     f, mean, var, std = ber(X,p)
     print "\nP(X ; %.2f) =\n"%(p), f, "\n"
-    print "  mean = %.2f"%mean
-    print "  var = %.3f"%var
-    print "  std = %.4f"%std
+    print "  mean = %.2f" % mean
+    print "  var = %.3f" % var
+    print "  std = %.4f" % std
 
 
 
@@ -94,6 +104,10 @@ def test_ber(n=5,p=0.5):
 
 p = 0.3
 test_ber(5,p)
+
+n = 4
+k = 2
+print binomialCoefficient(n, k)
 
 # X = np.linspace(-4.0, 4.0, num=40)
 # Y = pdf(X)
