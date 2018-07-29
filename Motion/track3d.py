@@ -30,7 +30,7 @@ freq = 100
 
 if len(sys.argv)>1:
     fileName = sys.argv[1]
-print "Using File:", fileName
+print("Using File:", fileName)
 
 # Read CSV File
 with open(fileName, 'r') as f:

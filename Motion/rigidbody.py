@@ -15,6 +15,8 @@ History:
     24.11.2014. Added test of Quaternions for a valid rotation R.
     28.01.2015. Separated from script "tracking.py".
     19.03.2016. Added Madwicks' Algorithm.
+    27.07.2018. Modified Madgwick's Algorithm and initial pose estimation.
+                Add cosine and sine functions for degrees.
 
 @author: Mario Garcia
 """
@@ -25,20 +27,30 @@ import platform
 
 # Check OS
 LINUX = platform.system() == 'Linux'
-    
-    
+
+# Default values
+rad2deg = 180.0/np.pi
+deg2rad = np.pi/180.0
+
+
+def cosd(deg):
+    return np.cos(deg*deg2rad)
+
+
+def sind(deg):
+    return np.sin(deg*deg2rad)
+
+
 def rotate(ex,ey,ez):
-    """
-    This creates a 3-by-3 rotation matrix R in SO(3) with the common
-    sequence xyz created by multiplying three rotation matrices of the
-    form:
+    """rotate creates a 3-by-3 rotation matrix R in SO(3) with the common
+    sequence xyz created by multiplying three rotation matrices of the form:
         R = Rz(ez)*Ry(ey)*Rx(ex)
     where ex, ey and ez are given in degrees.
     """
     # Convert from degrees to radians
-    ex = (ex)*np.pi/180
-    ey = (ey)*np.pi/180
-    ez = (ez)*np.pi/180
+    ex *= deg2rad
+    ey *= deg2rad
+    ez *= deg2rad
     # Build rotation matrices
     Rx = np.array([[1, 0, 0],[0, np.cos(ex), -np.sin(ex)],[0, np.sin(ex), np.cos(ex)]])
     Ry = np.array([[np.cos(ey), 0, np.sin(ey)],[0, 1, 0],[-np.sin(ey), 0, np.cos(ey)]])
@@ -46,23 +58,77 @@ def rotate(ex,ey,ez):
     return np.dot(Rz,np.dot(Ry,Rx))
 
 
-def initpose(acx, acy, acz):
+def am2q(a=[], m=[], retype='q'):
+    """am2q naively computes the pose of the pen based on the acceleration
+    forces sensed along each axis. Additionally, a triaxial magnetometer can be
+    used.
     """
-    initpose naively computes the pose of the pen based SOLELY on the
-    acceleration forces sensed along each axis.
-    NOTE: Still in development.
-    """
+    acx, acy, acz = a[0], a[1], a[2]
     # Get norm of acceleration vector
     acn = np.sqrt(acx**2 + acy**2 + acz**2)
     # Normalize values
     acx /= acn
     acy /= acn
     acz /= acn
-    # Estimate X and Y angles
-    ex = np.arctan2( acy, acz) * 180/np.pi
-    ey = np.arctan2(-acx, np.sqrt(acy**2 + acz**2)) * 180/np.pi
+    # Estimate Roll and Pitch angles (Yaw is equal to Zero)
+    ex = np.arctan2( acy, acz)
+    ey = np.arctan2(-acx, np.sqrt(acy**2 + acz**2))
     ez = 0
-    return np.vstack((ex,ey,ez))
+    # Euler to Quaternion
+    cx2 = np.cos(ex/2.0)
+    sx2 = np.sin(ex/2.0)
+    cy2 = np.cos(ey/2.0)
+    sy2 = np.sin(ey/2.0)
+    qrw =  cx2*cy2
+    qrx =  sx2*cy2
+    qry =  cx2*sy2
+    qrz = -sx2*sy2
+    # Normalize reference Quaternion
+    invsqrt = np.sqrt(qrw**2 + qrx**2 + qry**2 + qrz**2)
+    qw = qrw / invsqrt
+    qx = qrx / invsqrt
+    qy = qry / invsqrt
+    qz = qrz / invsqrt
+    # Compass values were also provided (to get heading value)
+    if len(m)>2:
+        mx, my, mz = m[0], m[1], m[2]
+        # Normalize magnetometer measurements
+        invsqrt = np.sqrt(mx**2 + my**2 + mz**2)
+        mx /= invsqrt
+        my /= invsqrt
+        mz /= invsqrt
+        # Auxiliary variables to save computation
+        qw2 = qw*qw
+        qx2 = qx*qx
+        qy2 = qy*qy
+        qz2 = qz*qz
+        # Quaternion vector product = qr x (qm x qr*)  = qprod(r, qprod(m,qconj(r)) )
+        qmx =     mx*(qw2 + qx2 - qy2 - qz2) - 2.0*my*(qw*qz - qx*qy)         + 2.0*mz*(qw*qy + qx*qz)
+        qmy = 2.0*mx*(qw*qz + qx*qy)         +     my*(qw2 - qx2 + qy2 - qz2) + 2.0*mz*(qy*qz - qw*qx)
+        # Heading from product
+        ez = np.arctan2(-qmy, qmx)
+        # Build final Quaternion
+        cz2 = np.cos(ez/2.0)
+        sz2 = np.sin(ez/2.0)
+        qw = cx2*cy2*cz2 + sx2*sy2*sz2
+        qx = sx2*cy2*cz2 - cx2*sy2*sz2
+        qy = cx2*sy2*cz2 + sx2*cy2*sz2
+        qz = cx2*cy2*sz2 - sx2*sy2*cz2
+        # Normalize quaternion
+        invsqrt = np.sqrt(qw**2 + qx**2 + qy**2 + qz**2)
+        qw /= invsqrt
+        qx /= invsqrt
+        qy /= invsqrt
+        qz /= invsqrt
+    # Return desired values (Quaterion or Euler Angles)
+    if retype=='q':
+        return [qw, qx, qy, qz]
+    else:
+        # Convert Radians to Euler Angles
+        ex *= rad2deg
+        ey *= rad2deg
+        ez *= rad2deg
+        return [ex, ey, ez]
 
 
 def q2R(q=[1,0,0,0]):
@@ -112,93 +178,93 @@ def invTrans(T):
     return np.vstack((np.hstack(( R.T, np.dot(-R.T,t))), np.array([0,0,0,1])))
 
 
-def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.1, freq=100.0):
-    """Implementation of Madgwick's AHRS algorithms with a MARG architecture.
+class Madgwick:
+    def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.01, freq=100.0):
+        """Implementation of Madgwick's AHRS algorithms with a MARG architecture.
 
-    See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
-    @author: Sebastian Madgwick (2011)
+        See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
+        @author: Sebastian Madgwick (2011)
 
-    According to original source code, this adaptation to Python script is
-    provided under the GNU General Public Licence.
-    """
-    # Get elements from input
-    ax, ay, az = acc[0], acc[1], acc[2]
-    gx, gy, gz = gyr[0], gyr[1], gyr[2]
-    mx, my, mz = mag[0], mag[1], mag[2]
-    q0, q1, q2, q3 = q[0], q[1], q[2], q[3]
-    sampleFreq = freq
-    # Rate of change of quaternion from gyroscope
-    qDot1 = 0.5*(-q1*gx - q2*gy - q3*gz)
-    qDot2 = 0.5*( q0*gx + q2*gz - q3*gy)
-    qDot3 = 0.5*( q0*gy - q1*gz + q3*gx)
-    qDot4 = 0.5*( q0*gz + q1*gy - q2*gx)
-    # Compute feedback only if accelerometer measurement valid (avoids unvalid accelerometer values)
-    if( not((ax==0.0) & (ay==0.0) & (az==0.0)) ):
-        # Normalize accelerometers measurement
-        invsqrt = np.sqrt(ax*ax + ay*ay + az*az)
-        ax /= invsqrt
-        ay /= invsqrt
-        az /= invsqrt
-        # Normalize magnetometers measurement
-        invsqrt = np.sqrt(mx*mx + my*my + mz*mz)
-        mx /= invsqrt
-        my /= invsqrt
-        mz /= invsqrt
-        # Auxiliary variables to avoid repeated arithmetic
-        q0q0 = q0*q0
-        q0q1 = q0*q1
-        q0q2 = q0*q2
-        q0q3 = q0*q3
-        q1q1 = q1*q1
-        q1q2 = q1*q2
-        q1q3 = q1*q3
-        q2q2 = q2*q2
-        q2q3 = q2*q3
-        q3q3 = q3*q3
-        _2q0q2 = 2.0*q0q2
-        _2q2q3 = 2.0*q2q3
-        # Reference direction of Earth's magnetic field
-        hx     =      mx*(q0q0 + q1q1 - q2q2 - q3q3)  - 2.0*my*(q0q3 - q1q2)               + 2.0*mz*(q0q2 + q1q3)
-        hy     =  2.0*mx*(q0q3 + q1q2)                +     my*(q0q0 - q1q1 + q2q2 - q3q3) - 2.0*mz*(q0q1 - q2q3)
-        hz     = -2.0*mx*(q0q2 - q1q3)                + 2.0*my*(q0q1 + q2q3)               +     mz*(q0q0 - q1q1 - q2q2 + q3q3)
-        hxhy   = np.sqrt(hx*hx + hy*hy)
-        _2hxhy = 2.0*hxhy
-        _2hz   = 2.0*hz
-        _2qax  = 2.0*q1q3 - _2q0q2 - ax
-        _2qay  = 2.0*q0q1 + _2q2q3 - ay
-        _4qaz  = 4.0*(1.0 - 2.0*q1q1 - 2.0*q2q2 - az)
-        sumx = hxhy*(0.5 - q2q2 - q3q3)  + hz*(q1q3 - q0q2)       - mx
-        sumy = hxhy*(q1q2 - q0q3)        + hz*(q0q1 + q2q3)       - my
-        sumz = hxhy*(q0q2 + q1q3)        + hz*(0.5 - q1q1 - q2q2) - mz
-        # Gradient decent algorithm corrective step
-        s0 = 2.0*(-q2*_2qax + q1*_2qay)            - sumx*hz*q2                + sumy*(-hxhy*q3 + hz*q1) + sumz*hxhy*q2
-        s1 = 2.0*( q3*_2qax + q0*_2qay) - q1*_4qaz + sumx*hz*q3                + sumy*( hxhy*q2 + hz*q0) + sumz*(hxhy*q3 - _2hz*q1)
-        s2 = 2.0*(-q0*_2qax + q3*_2qay) - q2*_4qaz - sumx*( _2hxhy*q2 + hz*q0) + sumy*( hxhy*q1 + hz*q3) + sumz*(hxhy*q0 - _2hz*q2)
-        s3 = 2.0*( q1*_2qax + q2*_2qay)            + sumx*(-_2hxhy*q3 + hz*q1) + sumy*(-hxhy*q0 + hz*q2) + sumz*hxhy*q1
-        # normalize step magnitude
-        invsqrt = np.sqrt(s0*s0 + s1*s1 + s2*s2 + s3*s3)
-        s0 /= invsqrt
-        s1 /= invsqrt
-        s2 /= invsqrt
-        s3 /= invsqrt
-        # Apply feedback step
-        qDot1 -= beta*s0
-        qDot2 -= beta*s1
-        qDot3 -= beta*s2
-        qDot4 -= beta*s3
-    # Integrate rate of change of quaternion to yield quaternion
-    q0 += qDot1 / sampleFreq
-    q1 += qDot2 / sampleFreq
-    q2 += qDot3 / sampleFreq
-    q3 += qDot4 / sampleFreq
-    # Normalize quaternion
-    invsqrt = np.sqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3)
-    q0 /= invsqrt
-    q1 /= invsqrt
-    q2 /= invsqrt
-    q3 /= invsqrt
-    # Return Numpy Array of updated Quaternion
-    return np.array([q0, q1, q2, q3])
+        According to original source code.
+        """
+        # Get elements from input
+        ax, ay, az = acc[0], acc[1], acc[2]
+        gx, gy, gz = gyr[0], gyr[1], gyr[2]
+        mx, my, mz = mag[0], mag[1], mag[2]
+        qw, qx, qy, qz = q[0], q[1], q[2], q[3]
+        sampleFreq = freq
+        # Rate of change of quaternion from gyroscope
+        qDot1 = 0.5*(-qx*gx - qy*gy - qz*gz)
+        qDot2 = 0.5*( qw*gx + qy*gz - qz*gy)
+        qDot3 = 0.5*( qw*gy - qx*gz + qz*gx)
+        qDot4 = 0.5*( qw*gz + qx*gy - qy*gx)
+        # Compute feedback only if accelerometer measurement valid (avoids unvalid accelerometer values)
+        if( not((ax==0.0) & (ay==0.0) & (az==0.0)) ):
+            # Normalize accelerometers measurement
+            invsqrt = np.sqrt(ax*ax + ay*ay + az*az)
+            ax /= invsqrt
+            ay /= invsqrt
+            az /= invsqrt
+            # Normalize magnetometers measurement
+            invsqrt = np.sqrt(mx*mx + my*my + mz*mz)
+            mx /= invsqrt
+            my /= invsqrt
+            mz /= invsqrt
+            # Auxiliary variables to avoid repeated arithmetic
+            qwqw = qw*qw
+            qwqx = qw*qx
+            qwqy = qw*qy
+            qwqz = qw*qz
+            qxqx = qx*qx
+            qxqy = qx*qy
+            qxqz = qx*qz
+            qyqy = qy*qy
+            qyqz = qy*qz
+            qzqz = qz*qz
+            _2qwqy = 2.0*qwqy
+            _2qyqz = 2.0*qyqz
+            # Reference direction of Earth's magnetic field
+            hx     =      mx*(qwqw + qxqx - qyqy - qzqz)  - 2.0*my*(qwqz - qxqy)               + 2.0*mz*(qwqy + qxqz)
+            hy     =  2.0*mx*(qwqz + qxqy)                +     my*(qwqw - qxqx + qyqy - qzqz) - 2.0*mz*(qwqx - qyqz)
+            hz     = -2.0*mx*(qwqy - qxqz)                + 2.0*my*(qwqx + qyqz)               +     mz*(qwqw - qxqx - qyqy + qzqz)
+            hxhy   = np.sqrt(hx*hx + hy*hy)
+            _2hxhy = 2.0*hxhy
+            _2hz   = 2.0*hz
+            _2qax  = 2.0*qxqz - _2qwqy - ax
+            _2qay  = 2.0*qwqx + _2qyqz - ay
+            _4qaz  = 4.0*(1.0 - 2.0*qxqx - 2.0*qyqy - az)
+            sumx = hxhy*(0.5 - qyqy - qzqz)  + hz*(qxqz - qwqy)       - mx
+            sumy = hxhy*(qxqy - qwqz)        + hz*(qwqx + qyqz)       - my
+            sumz = hxhy*(qwqy + qxqz)        + hz*(0.5 - qxqx - qyqy) - mz
+            # Gradient decent algorithm corrective step
+            s0 = 2.0*(-qy*_2qax + qx*_2qay)            - sumx*hz*qy                + sumy*(-hxhy*qz + hz*qx) + sumz*hxhy*qy
+            s1 = 2.0*( qz*_2qax + qw*_2qay) - qx*_4qaz + sumx*hz*qz                + sumy*( hxhy*qy + hz*qw) + sumz*(hxhy*qz - _2hz*qx)
+            s2 = 2.0*(-qw*_2qax + qz*_2qay) - qy*_4qaz - sumx*( _2hxhy*qy + hz*qw) + sumy*( hxhy*qx + hz*qz) + sumz*(hxhy*qw - _2hz*qy)
+            s3 = 2.0*( qx*_2qax + qy*_2qay)            + sumx*(-_2hxhy*qz + hz*qx) + sumy*(-hxhy*qw + hz*qy) + sumz*hxhy*qx
+            # normalize step magnitude
+            invsqrt = np.sqrt(s0*s0 + s1*s1 + s2*s2 + s3*s3)
+            s0 /= invsqrt
+            s1 /= invsqrt
+            s2 /= invsqrt
+            s3 /= invsqrt
+            # Apply feedback step
+            qDot1 -= beta*s0
+            qDot2 -= beta*s1
+            qDot3 -= beta*s2
+            qDot4 -= beta*s3
+        # Integrate rate of change of quaternion to yield quaternion
+        qw += qDot1 / sampleFreq
+        qx += qDot2 / sampleFreq
+        qy += qDot3 / sampleFreq
+        qz += qDot4 / sampleFreq
+        # Normalize quaternion
+        invsqrt = np.sqrt(qw*qw + qx*qx + qy*qy + qz*qz)
+        qw /= invsqrt
+        qx /= invsqrt
+        qy /= invsqrt
+        qz /= invsqrt
+        # Return Numpy Array of updated Quaternion
+        return [qw, qx, qy, qz]
 
 
 ## TEST FUNCTIONS ##
@@ -234,9 +300,9 @@ def test_Rotation(space='Euler',debug=False):
         detR = lin.det(R)                                   # Determinant of R
         if debug:
             # Print the used angles and the determinant of the rotation matrix if Debug mode is ON
-            print "----------------------------------------------------------------------"
-            print " ex = %3.4f \n ey = %3.4f \n ez = %3.4f" % (angs[0], angs[1], angs[2])
-            print " det(R) = %1.4f" % detR
+            print("----------------------------------------------------------------------")
+            print(" ex = %3.4f \n ey = %3.4f \n ez = %3.4f" % (angs[0], angs[1], angs[2]))
+            print(" det(R) = %1.4f" % detR)
     elif space=='Quat':
         q    = np.random.random(4)                          # 4 random values of q
         qn   = np.sqrt(q[0]**2+q[1]**2+q[2]**2+q[3]**2)     # Euclidean length
@@ -245,14 +311,14 @@ def test_Rotation(space='Euler',debug=False):
         detR = lin.det(R)                                   # Determinant of R
         if debug:
             # Print the used quaternion and the determinant of the rotation matrix if Debug mode is ON
-            print "----------------------------------------------------------------------"
-            print " q_w = %1.4f \n q_x = %1.4f \n q_y = %1.4f \n q_z = %1.4f" % (q[0],q[1],q[2],q[3])
-            print " det(R) = %1.4f" % detR
+            print("----------------------------------------------------------------------")
+            print(" q_w = %1.4f \n q_x = %1.4f \n q_y = %1.4f \n q_z = %1.4f" % (q[0],q[1],q[2],q[3]))
+            print(" det(R) = %1.4f" % detR)
     # Test if det(R)=+1 and R^T*R=I
     if ((detR-1.0) < 1e-9) and ((np.trace(np.dot(R.T, R))-3.0) < 1e-9):
-        print "- Valid construction of rotation matrix ................ [",Texter.MSG_OK,"]"
+        print("- Valid construction of rotation matrix ................ [",Texter.MSG_OK,"]")
     else:
-        print "- Valid construction of rotation matrix ................ [",Texter.MSG_NO,"]"
+        print("- Valid construction of rotation matrix ................ [",Texter.MSG_NO,"]")
 
 
 def test_ChordalDist(debug=False):
@@ -271,15 +337,15 @@ def test_ChordalDist(debug=False):
     d   = dchord(R1,R2)                                # Chordal distance
     if debug:
         # Printed the used angles, rotations, and thir chordal distance
-        print "----------------------------------------------------------------------"
-        print "Euler_angles     =", ang, "\nRotation_1:\n", R1
-        print "Unit_Quaternion  =", q,   "\nRotation_2:\n", R2
-        print "Chordal distance =", d
+        print("----------------------------------------------------------------------")
+        print("Euler_angles     =", ang, "\nRotation_1:\n", R1)
+        print("Unit_Quaternion  =", q,   "\nRotation_2:\n", R2)
+        print("Chordal distance =", d)
     # Test if Chordal distance is within the valid range
     if 0.0 <= d:
-        print "- Valid distance between two rotation matrices ......... [",Texter.MSG_OK,"]"
+        print("- Valid distance between two rotation matrices ......... [",Texter.MSG_OK,"]")
     else:
-        print "- Valid distance between two rotation matrices ......... [",Texter.MSG_NO,"]"
+        print("- Valid distance between two rotation matrices ......... [",Texter.MSG_NO,"]")
 
 
 ## MAIN EXECUTION as a script ##
@@ -295,11 +361,11 @@ if __name__ == "__main__":
         mode = sys.argv[1]
         if mode == "--debug":
             dmode = True
-            print Texter.ENBL+"Debug mode is ON"+Texter.ENDC
+            print(Texter.ENBL+"Debug mode is ON"+Texter.ENDC)
         else:
-            print Texter.WARN+"Given parameter is not valid.\nProceeding with default values."+Texter.ENDC
+            print(Texter.WARN+"Given parameter is not valid.\nProceeding with default values."+Texter.ENDC)
 
     # Start Running Tests in given mode
-    print "Running tests... "
+    print("Running tests... ")
     test_Rotation(space=smode, debug=dmode)
     test_ChordalDist(debug=dmode)

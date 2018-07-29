@@ -28,6 +28,7 @@ Useful Code for the several Robotics fields. It is divided into the following ma
 * [Control Engineering Problem with Solutions](http://bookboon.com/en/control-engineering-problems-with-solutions-ebook); Derek P. Atherton; bookboon.com. 2013.
 * [Electrical and Electronic Engineering Books](http://www.sciencebooksonline.info/engineering/electrical-electronic.html). A list with relevant bibliography about Electricity and Electronics.
 * [Automation and Robotics](http://www.intechopen.com/books/automation_and_robotics); Juan Manuel Ramos Arreguín; I-Tech. 2008.
+* [Springer Handbook of Robotics](https://www.springer.com/de/book/9783540303015) edited by Bruno Siciliano and Oussama Khatib is the best compendium of Robotics out there.
 
 ### Intelligence
 
@@ -39,6 +40,7 @@ Useful Code for the several Robotics fields. It is divided into the following ma
 * [Youtube Playlist: Machine Learning course 2013](https://www.youtube.com/playlist?list=PLE6Wd9FR--EdyJ5lbFl8UuGjecvVw66F6) (21 videos) by Nando de Freitas.
 * [Youtube Playlist: Machine Learning](https://www.youtube.com/playlist?list=PLZ9qNFMHZ-A4rycgrgOYma6zxF4BZGGPW) (107 videos) of Coursera by Andrew Ng.
 * [Youtube Playlist: Machine Learning](https://www.youtube.com/playlist?list=PLD0F06AA0D2E8FFBA) (160 videos) by mathematicalmonk.
+* [Youtube Playlist: Neural Networks](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) (4 videos) by [Grant Sanderson](https://twitter.com/3blue1brown) (a.k.a. 3blue1brown) giving a very clear and intuitive explanation of how NNs work. [His channel](https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw) is worth visiting and subscribing.
 * [Youtube Playlist: Neural Networks for Machine Learning](https://www.youtube.com/playlist?list=PLoRl3Ht4JOcdU872GhiYWf6jwrk_SNhz9) (78 videos) of Coursera from Geoffrey Hinton.
 * [Youtube Playlist: Deep Learning course 2015](https://www.youtube.com/playlist?list=PLE6Wd9FR--EfW8dtjAuPoTuPcqmOV53Fu) (16 videos) by Nando de Freitas.
 * [Deep Learning Tutorials](http://deeplearning.net/reading-list/tutorials/). List of Deep Learning materials.
@@ -51,6 +53,7 @@ Useful Code for the several Robotics fields. It is divided into the following ma
 * How to build a Neural Network [Part 1](https://stevenmiller888.github.io/mind-how-to-build-a-neural-network/) and [Part 2](http://stevenmiller888.github.io/mind-how-to-build-a-neural-network-part-2/) by Steven Miller.
 * [Youtube: How Deep Neural Networks Work](https://www.youtube.com/watch?v=ILsA4nyG7I0) (24:37) by Brandon Rohrer.
 * [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/). Free online book about NNs and Deep Learning by [Michael Nielsen](http://michaelnielsen.org/).
+* [fast.ai](http://www.fast.ai/) is a portal with an incredibly useful tutorial and material for cutting-edge Deep Learning by [Jeremy Howard](https://twitter.com/jeremyphoward).
 
 **Books**
 
@@ -64,9 +67,9 @@ Useful Code for the several Robotics fields. It is divided into the following ma
 
 * [The Mathematics of the 3D Rotation Matrix](http://www.fastgraph.com/makegames/3drotation/). A practical explanation on the Maths of 3D geometric systems.
 * [Linköpings Universitet: Sensor Fusion](http://www.control.isy.liu.se/student/tsrt14/). The most important methods and algorithms of sensor fusion for networking, navigation and tracking applications.
-* [Kalman Filtering](http://www.acasper.org/tag/kalman-filter/). Great practical explanation of KF and EKF by Andrew Casper using a camera to track an objective.
 * [Sensor Fusion using the Kalman Filter](http://campar.in.tum.de/Chair/KalmanFilter). A simple and concise presentation of the Kalman Filter.
 * [IMU Data Fusing: Complementary, Kalman, and Mahony Filter](http://www.olliw.eu/2013/imu-data-fusing/). Explanation and basics of IMU data-fusing with the use and comparison of several algorithms (KF, Complementary, Mahony and Madgwick.)
+* [Youtube Playlist: SLAM Course - WS13/14](https://www.youtube.com/playlist?list=PLgnQpQtFTOGQrZ4O5QzbIHgl3b1JHimN_) (22 videos) by [Cyrill Stachniss](http://www.informatik.uni-freiburg.de/~stachnis) with available [lecture material](http://ais.informatik.uni-freiburg.de/teaching/ws13/mapping/).
 * [Programming for robotics: Introduction to ROS](http://robohub.org/programming-for-robotics-introduction-to-ros/). 4 Video-Tutorials prepared by Péter Fankhauser introducing the Robot Operating System.
 * [Fritzing](http://fritzing.org/home/). Open-source hardware designer.
 
