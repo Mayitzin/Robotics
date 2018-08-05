@@ -31,6 +31,7 @@ LINUX = platform.system() == 'Linux'
 # Default values
 rad2deg = 180.0/np.pi
 deg2rad = np.pi/180.0
+default_freq = 100.0
 
 
 def cosd(deg):
@@ -178,14 +179,251 @@ def invTrans(T):
     return np.vstack((np.hstack(( R.T, np.dot(-R.T,t))), np.array([0,0,0,1])))
 
 
+class Mahony:
+    def updateIMU(acc, gyr, q=[1.0,0.0,0.0,0.0], freq=default_freq, Kp=0.1, Ki=0.5):
+        """Mahony's AHRS algorithm with an IMU architecture.
+
+        Adapted to Python from original implementation by Sebastian Madgwick.
+
+        See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
+        See: "Nonlinear Complementary Filters on the Special Orthogonal Group"
+             https://hal.archives-ouvertes.fr/hal-00488376/document
+        See: http://www.olliw.eu/2013/imu-data-fusing/
+        """
+        twoKp = 2.0*Kp     # 2 * proportional gain
+        twoKi = 2.0*Ki     # 2 * integral gain
+        integralFBx = 0.0
+        integralFBy = 0.0
+        integralFBz = 0.0
+        # Get elements from input
+        ax, ay, az = acc[0], acc[1], acc[2]
+        gx, gy, gz = gyr[0], gyr[1], gyr[2]
+        qw, qx, qy, qz = q[0], q[1], q[2], q[3]
+        # Compute feedback only if accelerometer measurement valid
+        # (avoids NaN in accelerometer normalisation)
+        if( not((ax==0.0) & (ay==0.0) & (az==0.0)) ):
+            # Normalise accelerometer measurement
+            recipNorm = np.sqrt(ax * ax + ay * ay + az * az)
+            ax /= recipNorm
+            ay /= recipNorm
+            az /= recipNorm
+            # Estimated direction of gravity
+            halfvx = qx*qz - qw*qy
+            halfvy = qw*qx + qy*qz
+            halfvz = qw*qw + qz*qz - 0.5
+            # Error is sum of cross product between estimated
+            # and measured direction of gravity
+            halfex = (ay * halfvz - az * halfvy)
+            halfey = (az * halfvx - ax * halfvz)
+            halfez = (ax * halfvy - ay * halfvx)
+            # Compute and apply integral feedback if enabled
+            if(twoKi > 0.0):
+                # integral error scaled by Ki
+                integralFBx += twoKi * halfex / freq
+                integralFBy += twoKi * halfey / freq
+                integralFBz += twoKi * halfez / freq
+                # apply integral feedback
+                gx += integralFBx
+                gy += integralFBy
+                gz += integralFBz
+            else:
+                # prevent integral windup
+                integralFBx = 0.0
+                integralFBy = 0.0
+                integralFBz = 0.0
+            # Apply proportional feedback
+            gx += twoKp * halfex
+            gy += twoKp * halfey
+            gz += twoKp * halfez
+        # Integrate rate of change of quaternion
+        gx *= (0.5 / freq)       # pre-multiply common factors
+        gy *= (0.5 / freq)
+        gz *= (0.5 / freq)
+        qa = qw
+        qb = qx
+        qc = qy
+        qw += (-qb * gx - qc * gy - qz * gz)
+        qx += ( qa * gx + qc * gz - qz * gy)
+        qy += ( qa * gy - qb * gz + qz * gx)
+        qz += ( qa * gz + qb * gy - qc * gx)
+        # Normalise quaternion
+        recipNorm = np.sqrt(qw * qw + qx * qx + qy * qy + qz * qz)
+        qw /= recipNorm
+        qx /= recipNorm
+        qy /= recipNorm
+        qz /= recipNorm
+        return [qw, qx, qy, qz]
+
+    def updateMARG(acc, gyr, mag, q=[1.0,0.0,0.0,0.0], freq=default_freq, Kp=0.1, Ki=0.5):
+        """Mahony's AHRS algorithm with a MARG architecture.
+
+        Adapted to Python from original implementation by Sebastian Madgwick.
+
+        See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
+        See: "Nonlinear Complementary Filters on the Special Orthogonal Group"
+             https://hal.archives-ouvertes.fr/hal-00488376/document
+        See: http://www.olliw.eu/2013/imu-data-fusing/
+        """
+        twoKp = 2.0*Kp     # 2 * proportional gain
+        twoKi = 2.0*Ki     # 2 * integral gain
+        integralFBx = 0.0
+        integralFBy = 0.0
+        integralFBz = 0.0
+        # Get elements from input
+        ax, ay, az = acc[0], acc[1], acc[2]
+        gx, gy, gz = gyr[0], gyr[1], gyr[2]
+        mx, my, mz = mag[0], mag[1], mag[2]
+        q0, q1, q2, q3 = q[0], q[1], q[2], q[3]
+        # Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
+        if( (mx==0.0) & (my==0.0) & (mz==0.0) ):
+            Mahony.updateIMU(acc, gyr, q, freq, Kp, Ki)
+        # Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
+        if( not((ax==0.0) & (ay==0.0) & (az==0.0)) ):
+            # Normalise accelerometer measurement
+            recipNorm = np.sqrt(ax * ax + ay * ay + az * az)
+            ax /= recipNorm
+            ay /= recipNorm
+            az /= recipNorm
+            # Normalise magnetometer measurement
+            recipNorm = np.sqrt(mx * mx + my * my + mz * mz)
+            mx /= recipNorm
+            my /= recipNorm
+            mz /= recipNorm
+            # Auxiliary variables to avoid repeated arithmetic
+            q0q0 = q0 * q0
+            q0q1 = q0 * q1
+            q0q2 = q0 * q2
+            q0q3 = q0 * q3
+            q1q1 = q1 * q1
+            q1q2 = q1 * q2
+            q1q3 = q1 * q3
+            q2q2 = q2 * q2
+            q2q3 = q2 * q3
+            q3q3 = q3 * q3
+            # Reference direction of Earth's magnetic field
+            hx = 2.0 * (mx * (0.5 - q2q2 - q3q3) + my * (q1q2 - q0q3) + mz * (q1q3 + q0q2))
+            hy = 2.0 * (mx * (q1q2 + q0q3) + my * (0.5 - q1q1 - q3q3) + mz * (q2q3 - q0q1))
+            bx = np.sqrt(hx * hx + hy * hy)
+            bz = 2.0 * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5 - q1q1 - q2q2))
+            # Estimated direction of gravity and magnetic field
+            halfvx = q1q3 - q0q2
+            halfvy = q0q1 + q2q3
+            halfvz = q0q0 - 0.5 + q3q3
+            halfwx = bx * (0.5 - q2q2 - q3q3) + bz * (q1q3 - q0q2)
+            halfwy = bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3)
+            halfwz = bx * (q0q2 + q1q3) + bz * (0.5 - q1q1 - q2q2)
+            # Error is sum of cross product between estimated direction and measured direction of field vectors
+            halfex = (ay * halfvz - az * halfvy) + (my * halfwz - mz * halfwy)
+            halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz)
+            halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx)
+            # Compute and apply integral feedback if enabled
+            if(twoKi > 0.0) :
+                integralFBx += twoKi * halfex / freq    # integral error scaled by Ki
+                integralFBy += twoKi * halfey / freq
+                integralFBz += twoKi * halfez / freq
+                gx += integralFBx  # apply integral feedback
+                gy += integralFBy
+                gz += integralFBz
+            else:
+                integralFBx = 0.0 # prevent integral windup
+                integralFBy = 0.0
+                integralFBz = 0.0
+            # Apply proportional feedback
+            gx += twoKp * halfex
+            gy += twoKp * halfey
+            gz += twoKp * halfez
+        
+        # Integrate rate of change of quaternion
+        gx *= (0.5 / freq)     # pre-multiply common factors
+        gy *= (0.5 / freq)
+        gz *= (0.5 / freq)
+        qa = q0
+        qb = q1
+        qc = q2
+        q0 += (-qb * gx - qc * gy - q3 * gz)
+        q1 += ( qa * gx + qc * gz - q3 * gy)
+        q2 += ( qa * gy - qb * gz + q3 * gx)
+        q3 += ( qa * gz + qb * gy - qc * gx)
+        # Normalise quaternion
+        recipNorm = np.sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3)
+        q0 /= recipNorm
+        q1 /= recipNorm
+        q2 /= recipNorm
+        q3 /= recipNorm
+        q_array = [q0, q1, q2, q3]
+        return q_array
+
+
 class Madgwick:
+    def updateIMU(acc, gyr, q=np.array([1.0,0.0,0.0,0.0]), beta=0.01, freq=100.0):
+        # Get elements from input
+        ax, ay, az = acc[0], acc[1], acc[2]
+        gx, gy, gz = gyr[0], gyr[1], gyr[2]
+        qw, qx, qy, qz = q[0], q[1], q[2], q[3]
+        sampleFreq = freq
+        # Rate of change of quaternion from gyroscope
+        qDot1 = 0.5 * (-qx * gx - qy * gy - qz * gz)
+        qDot2 = 0.5 * ( qw * gx + qy * gz - qz * gy)
+        qDot3 = 0.5 * ( qw * gy - qx * gz + qz * gx)
+        qDot4 = 0.5 * ( qw * gz + qx * gy - qy * gx)
+        # Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
+        if( not((ax==0.0) & (ay==0.0) & (az==0.0)) ):
+            # Normalise accelerometer measurement
+            recipNorm = np.sqrt(ax * ax + ay * ay + az * az)
+            ax /= recipNorm
+            ay /= recipNorm
+            az /= recipNorm
+            # Auxiliary variables to avoid repeated arithmetic
+            _2qw = 2.0 * qw
+            _2qx = 2.0 * qx
+            _2qy = 2.0 * qy
+            _2qz = 2.0 * qz
+            # _4qw = 4.0 * qw
+            _4qx = 4.0 * qx
+            _4qy = 4.0 * qy
+            _8qx = 8.0 * qx
+            _8qy = 8.0 * qy
+            qwqw = qw * qw
+            qxqx = qx * qx
+            qyqy = qy * qy
+            qzqz = qz * qz
+            # Gradient decent algorithm corrective step
+            s0 = 4.0*qw*qyqy + 4.0*qw*qxqx + 2.0*qy*ax - 2.0*qx*ay
+            s1 = 4.0*qx*qzqz + 4.0*qx*qwqw - 2.0*qz*ax - 2.0*qw*ay + _4qx*az - _4qx + _8qx*qxqx + _8qx*qyqy
+            s2 = 4.0*qy*qwqw + 4.0*qy*qzqz + 2.0*qw*ax - 2.0*qz*ay + _4qy*az - _4qy + _8qy*qxqx + _8qy*qyqy
+            s3 = 4.0*qz*qxqx + 4.0*qz*qyqy - 2.0*qx*ax - 2.0*qy*ay
+            # normalise step magnitude
+            recipNorm = np.sqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3)
+            s0 /= recipNorm
+            s1 /= recipNorm
+            s2 /= recipNorm
+            s3 /= recipNorm
+            # Apply feedback step
+            qDot1 -= beta * s0
+            qDot2 -= beta * s1
+            qDot3 -= beta * s2
+            qDot4 -= beta * s3
+        # Integrate rate of change of quaternion to yield quaternion
+        qw += qDot1 / sampleFreq
+        qx += qDot2 / sampleFreq
+        qy += qDot3 / sampleFreq
+        qz += qDot4 / sampleFreq
+        # Normalise quaternion
+        recipNorm = np.sqrt(qw * qw + qx * qx + qy * qy + qz * qz)
+        qw /= recipNorm
+        qx /= recipNorm
+        qy /= recipNorm
+        qz /= recipNorm
+        return [qw, qx, qy, qz]
+
     def updateMARG(acc, gyr, mag, q=np.array([1.0,0.0,0.0,0.0]), beta=0.01, freq=100.0):
-        """Implementation of Madgwick's AHRS algorithms with a MARG architecture.
+        """Madgwick's AHRS algorithm with a MARG architecture.
+
+        Adapted to Python from original implementation by Sebastian Madgwick.
 
         See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
         @author: Sebastian Madgwick (2011)
-
-        According to original source code.
+        See: http://www.olliw.eu/2013/imu-data-fusing/
         """
         # Get elements from input
         ax, ay, az = acc[0], acc[1], acc[2]
