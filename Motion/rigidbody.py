@@ -106,7 +106,7 @@ def am2q(a=[], m=[], retype='q'):
         # Quaternion vector product = qr x (qm x qr*)  = qprod(r, qprod(m,qconj(r)) )
         qmx =     mx*(qw2 + qx2 - qy2 - qz2) - 2.0*my*(qw*qz - qx*qy)         + 2.0*mz*(qw*qy + qx*qz)
         qmy = 2.0*mx*(qw*qz + qx*qy)         +     my*(qw2 - qx2 + qy2 - qz2) + 2.0*mz*(qy*qz - qw*qx)
-        # Heading from product
+        # Estimate Yaw
         ez = np.arctan2(-qmy, qmx)
         # Build final Quaternion
         cz2 = np.cos(ez/2.0)
@@ -185,9 +185,9 @@ class Mahony:
 
         Adapted to Python from original implementation by Sebastian Madgwick.
 
-        See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
         See: "Nonlinear Complementary Filters on the Special Orthogonal Group"
              https://hal.archives-ouvertes.fr/hal-00488376/document
+        See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
         See: http://www.olliw.eu/2013/imu-data-fusing/
         """
         twoKp = 2.0*Kp     # 2 * proportional gain
@@ -362,10 +362,10 @@ class Madgwick:
         qw, qx, qy, qz = q[0], q[1], q[2], q[3]
         sampleFreq = freq
         # Rate of change of quaternion from gyroscope
-        qDot1 = 0.5 * (-qx * gx - qy * gy - qz * gz)
-        qDot2 = 0.5 * ( qw * gx + qy * gz - qz * gy)
-        qDot3 = 0.5 * ( qw * gy - qx * gz + qz * gx)
-        qDot4 = 0.5 * ( qw * gz + qx * gy - qy * gx)
+        qDot1 = 0.5 * (-qx*gx - qy*gy - qz*gz)
+        qDot2 = 0.5 * ( qw*gx + qy*gz - qz*gy)
+        qDot3 = 0.5 * ( qw*gy - qx*gz + qz*gx)
+        qDot4 = 0.5 * ( qw*gz + qx*gy - qy*gx)
         # Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
         if( not((ax==0.0) & (ay==0.0) & (az==0.0)) ):
             # Normalise accelerometer measurement
@@ -374,24 +374,28 @@ class Madgwick:
             ay /= recipNorm
             az /= recipNorm
             # Auxiliary variables to avoid repeated arithmetic
-            _2qw = 2.0 * qw
-            _2qx = 2.0 * qx
-            _2qy = 2.0 * qy
-            _2qz = 2.0 * qz
+            # _2qw = 2.0 * qw
+            # _2qx = 2.0 * qx
+            # _2qy = 2.0 * qy
+            # _2qz = 2.0 * qz
             # _4qw = 4.0 * qw
-            _4qx = 4.0 * qx
-            _4qy = 4.0 * qy
-            _8qx = 8.0 * qx
-            _8qy = 8.0 * qy
+            # _4qx = 4.0 * qx
+            # _4qy = 4.0 * qy
+            # _8qx = 8.0 * qx
+            # _8qy = 8.0 * qy
             qwqw = qw * qw
             qxqx = qx * qx
             qyqy = qy * qy
             qzqz = qz * qz
             # Gradient decent algorithm corrective step
-            s0 = 4.0*qw*qyqy + 4.0*qw*qxqx + 2.0*qy*ax - 2.0*qx*ay
-            s1 = 4.0*qx*qzqz + 4.0*qx*qwqw - 2.0*qz*ax - 2.0*qw*ay + _4qx*az - _4qx + _8qx*qxqx + _8qx*qyqy
-            s2 = 4.0*qy*qwqw + 4.0*qy*qzqz + 2.0*qw*ax - 2.0*qz*ay + _4qy*az - _4qy + _8qy*qxqx + _8qy*qyqy
-            s3 = 4.0*qz*qxqx + 4.0*qz*qyqy - 2.0*qx*ax - 2.0*qy*ay
+            # s0 = 4.0*qw*qyqy + 4.0*qw*qxqx + 2.0*qy*ax - 2.0*qx*ay
+            # s1 = 4.0*qx*qzqz + 4.0*qx*qwqw - 2.0*qz*ax - 2.0*qw*ay + _4qx*az - _4qx + _8qx*qxqx + _8qx*qyqy
+            # s2 = 4.0*qy*qwqw + 4.0*qy*qzqz + 2.0*qw*ax - 2.0*qz*ay + _4qy*az - _4qy + _8qy*qxqx + _8qy*qyqy
+            # s3 = 4.0*qz*qxqx + 4.0*qz*qyqy - 2.0*qx*ax - 2.0*qy*ay
+            s0 = 2.0*( qy*ax - qx*ay) + 4.0*(qw*qyqy + qw*qxqx)
+            s1 = 2.0*(-qz*ax - qw*ay) + 4.0*(qx*qzqz + qx*qwqw) + 4.0*(qx*az - qx) + 8.0*qx*(qxqx + qyqy)
+            s2 = 2.0*( qw*ax - qz*ay) + 4.0*(qy*qwqw + qy*qzqz) + 4.0*(qy*az - qy) + 8.0*qy*(qxqx + qyqy)
+            s3 = 2.0*(-qx*ax - qy*ay) + 4.0*(qz*qxqx + qz*qyqy)
             # normalise step magnitude
             recipNorm = np.sqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3)
             s0 /= recipNorm
