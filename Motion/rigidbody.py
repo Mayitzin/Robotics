@@ -183,7 +183,7 @@ class Quaternion:
     def __init__(self, quaternion=[1.0, 0.0, 0.0, 0.0]):
         self.q = quaternion
 
-    def normalize(self, q)
+    def normalize(self, q):
         return q / np.linalg.norm(q)
 
     def q2R(self, q):
@@ -394,28 +394,16 @@ class Madgwick:
             ay /= recipNorm
             az /= recipNorm
             # Auxiliary variables to avoid repeated arithmetic
-            # _2qw = 2.0 * qw
-            # _2qx = 2.0 * qx
-            # _2qy = 2.0 * qy
-            # _2qz = 2.0 * qz
-            # _4qw = 4.0 * qw
-            # _4qx = 4.0 * qx
-            # _4qy = 4.0 * qy
-            # _8qx = 8.0 * qx
-            # _8qy = 8.0 * qy
             qwqw = qw * qw
             qxqx = qx * qx
             qyqy = qy * qy
             qzqz = qz * qz
+            qx_qy = qxqx + qyqy
             # Gradient decent algorithm corrective step
-            # s0 = 4.0*qw*qyqy + 4.0*qw*qxqx + 2.0*qy*ax - 2.0*qx*ay
-            # s1 = 4.0*qx*qzqz + 4.0*qx*qwqw - 2.0*qz*ax - 2.0*qw*ay + _4qx*az - _4qx + _8qx*qxqx + _8qx*qyqy
-            # s2 = 4.0*qy*qwqw + 4.0*qy*qzqz + 2.0*qw*ax - 2.0*qz*ay + _4qy*az - _4qy + _8qy*qxqx + _8qy*qyqy
-            # s3 = 4.0*qz*qxqx + 4.0*qz*qyqy - 2.0*qx*ax - 2.0*qy*ay
-            s0 = 2.0*( qy*ax - qx*ay) + 4.0*(qw*qyqy + qw*qxqx)
-            s1 = 2.0*(-qz*ax - qw*ay) + 4.0*(qx*qzqz + qx*qwqw) + 4.0*(qx*az - qx) + 8.0*qx*(qxqx + qyqy)
-            s2 = 2.0*( qw*ax - qz*ay) + 4.0*(qy*qwqw + qy*qzqz) + 4.0*(qy*az - qy) + 8.0*qy*(qxqx + qyqy)
-            s3 = 2.0*(-qx*ax - qy*ay) + 4.0*(qz*qxqx + qz*qyqy)
+            s0 = 2.0*( qy*ax - qx*ay) + 4.0*qw*qx_qy
+            s1 = 2.0*(-qz*ax - qw*ay) + 4.0*qx*(qwqw + qzqz + az - 1.0) + 8.0*qx*qx_qy
+            s2 = 2.0*( qw*ax - qz*ay) + 4.0*qy*(qwqw + qzqz + az - 1.0) + 8.0*qy*qx_qy
+            s3 = 2.0*(-qx*ax - qy*ay) + 4.0*qz*qx_qy
             # normalise step magnitude
             recipNorm = np.sqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3)
             s0 /= recipNorm
