@@ -179,6 +179,26 @@ def invTrans(T):
     return np.vstack((np.hstack(( R.T, np.dot(-R.T,t))), np.array([0,0,0,1])))
 
 
+class Quaternion:
+    def __init__(self, quaternion=[1.0, 0.0, 0.0, 0.0]):
+        self.q = quaternion
+
+    def normalize(self, q)
+        return q / np.linalg.norm(q)
+
+    def q2R(self, q):
+        """
+        q2R builds a rotation matrix R in SO(3) from a given Quaternion q of
+        the form q = [q_w, q_x, q_y, q_z].
+        The default value is the Quaternion q=[1,0,0,0] that produces a
+        3-by-3 Identity matrix.
+        """
+        return np.array([
+            [  1-2*(q[2]**2+q[3]**2),    2*(q[1]*q[2]-q[0]*q[3]),  2*(q[1]*q[3]+q[0]*q[2])  ],
+            [  2*(q[1]*q[2]+q[0]*q[3]),  1-2*(q[1]**2+q[3]**2),    2*(q[2]*q[3]-q[0]*q[1])  ],
+            [  2*(q[1]*q[3]-q[0]*q[2]),  2*(q[0]*q[1]+q[2]*q[3]),  1-2*(q[1]**2+q[2]**2)    ]])
+
+
 class Mahony:
     def updateIMU(acc, gyr, q=[1.0,0.0,0.0,0.0], freq=default_freq, Kp=0.1, Ki=0.5):
         """Mahony's AHRS algorithm with an IMU architecture.
