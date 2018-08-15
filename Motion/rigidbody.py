@@ -212,9 +212,6 @@ class Mahony:
         """
         twoKp = 2.0*Kp     # 2 * proportional gain
         twoKi = 2.0*Ki     # 2 * integral gain
-        integralFBx = 0.0
-        integralFBy = 0.0
-        integralFBz = 0.0
         # Get elements from input
         ax, ay, az = acc[0], acc[1], acc[2]
         gx, gy, gz = gyr[0], gyr[1], gyr[2]
@@ -223,7 +220,7 @@ class Mahony:
         # (avoids NaN in accelerometer normalisation)
         if( not((ax==0.0) & (ay==0.0) & (az==0.0)) ):
             # Normalise accelerometer measurement
-            recipNorm = np.sqrt(ax * ax + ay * ay + az * az)
+            recipNorm = np.sqrt(ax*ax + ay*ay + az*az)
             ax /= recipNorm
             ay /= recipNorm
             az /= recipNorm
@@ -233,28 +230,20 @@ class Mahony:
             halfvz = qw*qw + qz*qz - 0.5
             # Error is sum of cross product between estimated
             # and measured direction of gravity
-            halfex = (ay * halfvz - az * halfvy)
-            halfey = (az * halfvx - ax * halfvz)
-            halfez = (ax * halfvy - ay * halfvx)
+            halfex = ay*halfvz - az*halfvy
+            halfey = az*halfvx - ax*halfvz
+            halfez = ax*halfvy - ay*halfvx
             # Compute and apply integral feedback if enabled
             if(twoKi > 0.0):
-                # integral error scaled by Ki
-                integralFBx += twoKi * halfex / freq
-                integralFBy += twoKi * halfey / freq
-                integralFBz += twoKi * halfez / freq
-                # apply integral feedback
-                gx += integralFBx
-                gy += integralFBy
-                gz += integralFBz
-            else:
-                # prevent integral windup
-                integralFBx = 0.0
-                integralFBy = 0.0
-                integralFBz = 0.0
+                twoKiFreq = twoKi / freq
+                # apply integral feedback scaled by Ki
+                gx += halfex * twoKiFreq
+                gy += halfey * twoKiFreq
+                gz += halfez * twoKiFreq
             # Apply proportional feedback
-            gx += twoKp * halfex
-            gy += twoKp * halfey
-            gz += twoKp * halfez
+            gx += twoKp*halfex
+            gy += twoKp*halfey
+            gz += twoKp*halfez
         # Integrate rate of change of quaternion
         gx *= (0.5 / freq)       # pre-multiply common factors
         gy *= (0.5 / freq)
@@ -262,12 +251,12 @@ class Mahony:
         qa = qw
         qb = qx
         qc = qy
-        qw += (-qb * gx - qc * gy - qz * gz)
-        qx += ( qa * gx + qc * gz - qz * gy)
-        qy += ( qa * gy - qb * gz + qz * gx)
-        qz += ( qa * gz + qb * gy - qc * gx)
+        qw += (-qb*gx - qc*gy - qz*gz)
+        qx += ( qa*gx + qc*gz - qz*gy)
+        qy += ( qa*gy - qb*gz + qz*gx)
+        qz += ( qa*gz + qb*gy - qc*gx)
         # Normalise quaternion
-        recipNorm = np.sqrt(qw * qw + qx * qx + qy * qy + qz * qz)
+        recipNorm = np.sqrt(qw*qw + qx*qx + qy*qy + qz*qz)
         qw /= recipNorm
         qx /= recipNorm
         qy /= recipNorm
@@ -286,9 +275,6 @@ class Mahony:
         """
         twoKp = 2.0*Kp     # 2 * proportional gain
         twoKi = 2.0*Ki     # 2 * integral gain
-        integralFBx = 0.0
-        integralFBy = 0.0
-        integralFBz = 0.0
         # Get elements from input
         ax, ay, az = acc[0], acc[1], acc[2]
         gx, gy, gz = gyr[0], gyr[1], gyr[2]
@@ -310,48 +296,43 @@ class Mahony:
             my /= recipNorm
             mz /= recipNorm
             # Auxiliary variables to avoid repeated arithmetic
-            q0q0 = q0 * q0
-            q0q1 = q0 * q1
-            q0q2 = q0 * q2
-            q0q3 = q0 * q3
-            q1q1 = q1 * q1
-            q1q2 = q1 * q2
-            q1q3 = q1 * q3
-            q2q2 = q2 * q2
-            q2q3 = q2 * q3
-            q3q3 = q3 * q3
+            q0q0 = q0*q0
+            q0q1 = q0*q1
+            q0q2 = q0*q2
+            q0q3 = q0*q3
+            q1q1 = q1*q1
+            q1q2 = q1*q2
+            q1q3 = q1*q3
+            q2q2 = q2*q2
+            q2q3 = q2*q3
+            q3q3 = q3*q3
             # Reference direction of Earth's magnetic field
-            hx = 2.0 * (mx * (0.5 - q2q2 - q3q3) + my * (q1q2 - q0q3) + mz * (q1q3 + q0q2))
-            hy = 2.0 * (mx * (q1q2 + q0q3) + my * (0.5 - q1q1 - q3q3) + mz * (q2q3 - q0q1))
-            bx = np.sqrt(hx * hx + hy * hy)
-            bz = 2.0 * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5 - q1q1 - q2q2))
+            hx = 2.0*( mx*(0.5 - q2q2 - q3q3) + my*(q1q2 - q0q3)       + mz*(q1q3 + q0q2) )
+            hy = 2.0*( mx*(q1q2 + q0q3)       + my*(0.5 - q1q1 - q3q3) + mz*(q2q3 - q0q1) )
+            bz = 2.0*( mx*(q1q3 - q0q2)       + my*(q2q3 + q0q1)       + mz*(0.5 - q1q1 - q2q2) )
+            bx = np.sqrt(hx*hx + hy*hy)
             # Estimated direction of gravity and magnetic field
             halfvx = q1q3 - q0q2
             halfvy = q0q1 + q2q3
-            halfvz = q0q0 - 0.5 + q3q3
-            halfwx = bx * (0.5 - q2q2 - q3q3) + bz * (q1q3 - q0q2)
-            halfwy = bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3)
-            halfwz = bx * (q0q2 + q1q3) + bz * (0.5 - q1q1 - q2q2)
+            halfvz = q0q0 + q3q3 - 0.5
+            halfwx = bx*(0.5 - q2q2 - q3q3) + bz*(q1q3 - q0q2)
+            halfwy = bx*(q1q2 - q0q3)       + bz*(q0q1 + q2q3)
+            halfwz = bx*(q0q2 + q1q3)       + bz*(0.5 - q1q1 - q2q2)
             # Error is sum of cross product between estimated direction and measured direction of field vectors
-            halfex = (ay * halfvz - az * halfvy) + (my * halfwz - mz * halfwy)
-            halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz)
-            halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx)
+            halfex = (ay*halfvz - az*halfvy) + (my*halfwz - mz*halfwy)
+            halfey = (az*halfvx - ax*halfvz) + (mz*halfwx - mx*halfwz)
+            halfez = (ax*halfvy - ay*halfvx) + (mx*halfwy - my*halfwx)
             # Compute and apply integral feedback if enabled
-            if(twoKi > 0.0) :
-                integralFBx += twoKi * halfex / freq    # integral error scaled by Ki
-                integralFBy += twoKi * halfey / freq
-                integralFBz += twoKi * halfez / freq
-                gx += integralFBx  # apply integral feedback
-                gy += integralFBy
-                gz += integralFBz
-            else:
-                integralFBx = 0.0 # prevent integral windup
-                integralFBy = 0.0
-                integralFBz = 0.0
+            if(twoKi > 0.0):
+                twoKiFreq = twoKi / freq
+                # apply integral feedback scaled by Ki
+                gx += halfex*twoKiFreq 
+                gy += halfey*twoKiFreq
+                gz += halfez*twoKiFreq
             # Apply proportional feedback
-            gx += twoKp * halfex
-            gy += twoKp * halfey
-            gz += twoKp * halfez
+            gx += halfex*twoKp
+            gy += halfey*twoKp
+            gz += halfez*twoKp
         
         # Integrate rate of change of quaternion
         gx *= (0.5 / freq)     # pre-multiply common factors
@@ -360,10 +341,10 @@ class Mahony:
         qa = q0
         qb = q1
         qc = q2
-        q0 += (-qb * gx - qc * gy - q3 * gz)
-        q1 += ( qa * gx + qc * gz - q3 * gy)
-        q2 += ( qa * gy - qb * gz + q3 * gx)
-        q3 += ( qa * gz + qb * gy - qc * gx)
+        q0 += (-qb*gx - qc*gy - q3*gz)
+        q1 += ( qa*gx + qc*gz - q3*gy)
+        q2 += ( qa*gy - qb*gz + q3*gx)
+        q3 += ( qa*gz + qb*gy - qc*gx)
         # Normalise quaternion
         recipNorm = np.sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3)
         q0 /= recipNorm
