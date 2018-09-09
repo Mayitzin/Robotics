@@ -13,6 +13,7 @@ Useful Code for the several Robotics fields. It is divided into the following ma
 
 * [MATLAB: System Modeling](http://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=SystemModeling).
 * [MATLAB: Interactive Control Systems Tutorial](https://de.mathworks.com/academia/student_center/tutorials/controls-tutorial-launchpad.html). Learn essential skills for modeling, analyzing and designing control systems in MATLAB and Simulink.
+* [Robotics Toolbox for MATLAB](http://petercorke.com/wordpress/toolboxes/robotics-toolbox) by Peter Corke. Functions that are useful for the study and simulation of classical arm-type robotics. It also has a [GitHub repository](https://github.com/petercorke/robotics-toolbox-matlab).
 * [Tutorial on Control Theory](https://accelconf.web.cern.ch/accelconf/icalepcs2011/talks/tutmukp01_talk.pdf). Complete tutorial by [Stefan Simrock](http://tesla.desy.de/~simrock/).
 * [Stanford: EE392m: Control Engineering in Industry](http://web.stanford.edu/class/archive/ee/ee392m/ee392m.1056/) Material for the course about **Control Engineering in Industry** from the Spring Quarter 2004-2005.
 * [Youtube: Brian Douglas' Channel on Control Theory](https://www.youtube.com/user/ControlLectures). Excellent videos about Control Theory from basics to advanced topics.

@@ -180,8 +180,30 @@ def invTrans(T):
 
 
 class Quaternion:
+    """
+    ToDo:
+    - Use Quaternion functions as self-callable identities. e.g. q.conjugate().
+    - Add common operations, e.g. skew, multiplications, etc.
+
+    See:
+    - http://mathworld.wolfram.com/Quaternion.html
+    - https://en.wikipedia.org/wiki/Quaternion
+    - https://de.mathworks.com/help/aeroblks/quaternionmultiplication.html
+    """
     def __init__(self, quaternion=[1.0, 0.0, 0.0, 0.0]):
         self.q = quaternion
+
+    def add(self, p):
+        q = self.q
+        return [q[0]+p[0], q[1]+p[1], q[2]+p[2], q[3]+p[3]]
+
+    def dot(self, p):
+        q = self.q
+        return q[1]*p[1] + q[2]*p[2] + q[3]*p[3]
+
+    def conjugate(self):
+        q = self.q
+        return [ q[0], -q[1], -q[2], -q[3] ]
 
     def normalize(self, q):
         return q / np.linalg.norm(q)
