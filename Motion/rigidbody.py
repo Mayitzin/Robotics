@@ -190,8 +190,12 @@ class Quaternion:
     - https://en.wikipedia.org/wiki/Quaternion
     - https://de.mathworks.com/help/aeroblks/quaternionmultiplication.html
     """
-    def __init__(self, quaternion=[1.0, 0.0, 0.0, 0.0]):
-        self.q = quaternion
+    def __init__(self, q=[1.0, 0.0, 0.0, 0.0]):
+        if len(q)==3:
+            q = [0.0, q[0], q[1], q[2]]
+        elif len(q)<1:
+            q = np.random.random(4)
+        self.q = np.array(q)
 
     def add(self, p):
         q = self.q
@@ -601,6 +605,17 @@ def test_ChordalDist(debug=False):
         print("- Valid distance between two rotation matrices ......... [",Texter.MSG_NO,"]")
 
 
+def test_Quaternions(debug=False):
+    Q = Quaternion(np.random.random(3))
+    print("q =", Q.q)
+    P = Quaternion()
+    print("p =", P.q)
+    print("q+p =", Q.q+P.q)
+    R = Quaternion([])
+    print("r =", R.q)
+    print("q+r =", Q.q+R.q)
+
+
 ## MAIN EXECUTION as a script ##
 if __name__ == "__main__":
     import sys
@@ -622,3 +637,4 @@ if __name__ == "__main__":
     print("Running tests... ")
     test_Rotation(space=smode, debug=dmode)
     test_ChordalDist(debug=dmode)
+    test_Quaternions(debug=dmode)
