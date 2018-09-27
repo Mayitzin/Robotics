@@ -196,33 +196,50 @@ class Quaternion:
         elif len(q)<1:
             q = np.random.random(4)
         self.q = np.array(q)
+        self.w, self.s = q[0], q[0]
+        self.x = q[1]
+        self.y = q[2]
+        self.z = q[3]
+        self.v = np.array(q[1:])
 
-    def add(self, p):
-        q = self.q
-        return [q[0]+p[0], q[1]+p[1], q[2]+p[2], q[3]+p[3]]
+    def add(self, p=[]):
+        if len(p)<1:
+            p = self.q
+        return np.array([ self.w+p[0], self.x+p[1], self.y+p[2], self.z+p[3] ])
 
-    def dot(self, p):
-        q = self.q
-        return q[1]*p[1] + q[2]*p[2] + q[3]*p[3]
+    def dot(self, p=[]):
+        if len(p)<1:
+            p = self.q
+        return self.x*p[1] + self.y*p[2] + self.z*p[3]
 
     def conjugate(self):
-        q = self.q
-        return [ q[0], -q[1], -q[2], -q[3] ]
+        return np.array([ self.w, -self.x, -self.y, -self.z ])
 
-    def normalize(self, q):
+    def normalize(self, q=[]):
+        if len(q)<1:
+            q = self.q
         return q / np.linalg.norm(q)
 
-    def q2R(self, q):
-        """
-        q2R builds a rotation matrix R in SO(3) from a given Quaternion q of
+    def q2R(self, q=[]):
+        """q2R builds a rotation matrix R in SO(3) from a given Quaternion q of
         the form q = [q_w, q_x, q_y, q_z].
         The default value is the Quaternion q=[1,0,0,0] that produces a
         3-by-3 Identity matrix.
         """
+        if len(q)<1:
+            q = self.q
         return np.array([
-            [  1-2*(q[2]**2+q[3]**2),    2*(q[1]*q[2]-q[0]*q[3]),  2*(q[1]*q[3]+q[0]*q[2])  ],
-            [  2*(q[1]*q[2]+q[0]*q[3]),  1-2*(q[1]**2+q[3]**2),    2*(q[2]*q[3]-q[0]*q[1])  ],
-            [  2*(q[1]*q[3]-q[0]*q[2]),  2*(q[0]*q[1]+q[2]*q[3]),  1-2*(q[1]**2+q[2]**2)    ]])
+            [  1.0-2.0*(q[2]**2+q[3]**2),  2.0*(q[1]*q[2]-q[0]*q[3]),  2.0*(q[1]*q[3]+q[0]*q[2])  ],
+            [  2.0*(q[1]*q[2]+q[0]*q[3]),  1.0-2.0*(q[1]**2+q[3]**2),  2.0*(q[2]*q[3]-q[0]*q[1])  ],
+            [  2.0*(q[1]*q[3]-q[0]*q[2]),  2.0*(q[0]*q[1]+q[2]*q[3]),  1.0-2.0*(q[1]**2+q[2]**2)  ]])
+
+    def axisAngle(self, q=[]):
+        if len(q)<1:
+            q = self.q
+        denom = np.sqrt(q[1]**2 + q[2]**2 + q[3]**2)
+        vector = q[1:] / denom
+        theta = np.arctan2(denom, q[0])
+        return vector, theta
 
 
 class Mahony:
@@ -606,14 +623,28 @@ def test_ChordalDist(debug=False):
 
 
 def test_Quaternions(debug=False):
-    Q = Quaternion(np.random.random(3))
-    print("q =", Q.q)
-    P = Quaternion()
-    print("p =", P.q)
-    print("q+p =", Q.q+P.q)
-    R = Quaternion([])
-    print("r =", R.q)
-    print("q+r =", Q.q+R.q)
+    q = Quaternion(np.random.random(3))
+    # Test Conjugate
+    q_star = q.conjugate()
+    if (q_star[0]==q.w) and all(q_star[1:]==-q.v):
+        print("- Valid conjugate of a Quaternion ...................... [",Texter.MSG_OK,"]")
+    else:
+        print("- Valid conjugate of a Quaternion ...................... [",Texter.MSG_NO,"]")
+    p = Quaternion(np.random.random(4))
+    p_unit = p.normalize()
+    if abs(lin.norm(p_unit)-1.0)<1e-9:
+        print("- Quaternion is correctly normalized ................... [",Texter.MSG_OK,"]")
+    else:
+        print("- Quaternion is correctly normalized ................... [",Texter.MSG_NO,"]")
+    r = Quaternion([])
+    print("r =", r.q)
+    # Test sum of Quaternions
+    sum_1 = q.q+r.q
+    sum_2 = q.add(r.q)
+    if all(sum_1==sum_2):
+        print("- Valid sum of two Quaternions ......................... [",Texter.MSG_OK,"]")
+    else:
+        print("- Valid sum of two Quaternions ......................... [",Texter.MSG_NO,"]")
 
 
 ## MAIN EXECUTION as a script ##
