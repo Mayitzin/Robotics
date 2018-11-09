@@ -59,8 +59,8 @@ def rotate(ex,ey,ez):
     return np.dot(Rz,np.dot(Ry,Rx))
 
 
-def am2q(a=[], m=[], retype='q'):
-    """am2q naively computes the pose of the pen based on the acceleration
+def am2q(a=[], m=[], rtype='q'):
+    """am2q naively computes the pose of the device based on the acceleration
     forces sensed along each axis. Additionally, a triaxial magnetometer can be
     used.
     """
@@ -122,7 +122,7 @@ def am2q(a=[], m=[], retype='q'):
         qy /= invsqrt
         qz /= invsqrt
     # Return desired values (Quaterion or Euler Angles)
-    if retype=='q':
+    if rtype=='q':
         return [qw, qx, qy, qz]
     else:
         # Convert Radians to Euler Angles
@@ -162,9 +162,13 @@ def dchord(R1,R2):
     R1 and R2. Possible outputs are:
     - It is equal to zero if both matrices are equal.
     - It is equal to sqrt(12) ~ 3.464 if they are completely different.
+
+    See Also
+    --------
+    - http://users.cecs.anu.edu.au/~trumpf/pubs/Hartley_Trumpf_Dai_Li.pdf
     """
     A = R1 - R2
-    return np.sqrt(np.trace(np.dot(A.T, A)))
+    return np.sqrt(lin.norm(A, ord='fro'))
 
 
 def invTrans(T):
@@ -189,13 +193,22 @@ class Quaternion:
     - http://mathworld.wolfram.com/Quaternion.html
     - https://en.wikipedia.org/wiki/Quaternion
     - https://de.mathworks.com/help/aeroblks/quaternionmultiplication.html
+    - https://engineering.purdue.edu/CE/Academics/Groups/Geomatics/DPRG/Slides/Chapter7_Quaternion
     """
-    def __init__(self, q=[1.0, 0.0, 0.0, 0.0]):
-        if len(q)==3:
-            q = [0.0, q[0], q[1], q[2]]
-        elif len(q)<1:
+    def __init__(self, q=None, unit=True):
+        if q is None:
+            q = [1.0, 0.0, 0.0, 0.0]
+        if len(q) < 1:
             q = np.random.random(4)
+        if len(q) == 3:
+            q_0 = q[0]
+            if type(q_0) is np.ndarray and len(q_0) == 3:
+                q = self.fromR(q)
+            else:
+                q = [0.0, q[0], q[1], q[2]]
         self.q = np.array(q)
+        if unit:
+            self.q = self.normalize(self.q)
         self.w, self.s = q[0], q[0]
         self.x = q[1]
         self.y = q[2]
@@ -229,9 +242,9 @@ class Quaternion:
         if len(q)<1:
             q = self.q
         return np.array([
-            [  1.0-2.0*(q[2]**2+q[3]**2),  2.0*(q[1]*q[2]-q[0]*q[3]),  2.0*(q[1]*q[3]+q[0]*q[2])  ],
-            [  2.0*(q[1]*q[2]+q[0]*q[3]),  1.0-2.0*(q[1]**2+q[3]**2),  2.0*(q[2]*q[3]-q[0]*q[1])  ],
-            [  2.0*(q[1]*q[3]-q[0]*q[2]),  2.0*(q[0]*q[1]+q[2]*q[3]),  1.0-2.0*(q[1]**2+q[2]**2)  ]])
+            [1.0-2.0*(q[2]**2+q[3]**2), 2.0*(q[1]*q[2]-q[0]*q[3]), 2.0*(q[1]*q[3]+q[0]*q[2])],
+            [2.0*(q[1]*q[2]+q[0]*q[3]), 1.0-2.0*(q[1]**2+q[3]**2), 2.0*(q[2]*q[3]-q[0]*q[1])],
+            [2.0*(q[1]*q[3]-q[0]*q[2]), 2.0*(q[0]*q[1]+q[2]*q[3]), 1.0-2.0*(q[1]**2+q[2]**2)]])
 
     def axisAngle(self, q=[]):
         if len(q)<1:
@@ -240,6 +253,50 @@ class Quaternion:
         vector = q[1:] / denom
         theta = np.arctan2(denom, q[0])
         return vector, theta
+
+    def fromR(self, R=np.eye(3), eta=0.0):
+        """
+        Obtain a Quaternion from a rotation matrix
+
+        See Also
+        --------
+
+        - http://www.iri.upc.edu/files/scidoc/2068-Accurate-Computation-of-Quaternions-from-Rotation-Matrices.pdf
+        """
+        # Get elements of R
+        r11, r12, r13 = R[0][0], R[0][1], R[0][2]
+        r21, r22, r23 = R[1][0], R[1][1], R[1][2]
+        r31, r32, r33 = R[2][0], R[2][1], R[2][2]
+        # Compute qw
+        if (r11+r22+r33) > eta:
+            qw = 0.5 * np.sqrt(1.0+r11+r22+r33)
+        else:
+            nom = (r32-r23)**2+(r13-r31)**2+(r21-r12)**2
+            denom = 3.0-r11-r22-r33
+            qw = 0.5 * np.sqrt(nom/denom)
+        # Compute qx
+        if (r11-r22-r33) > eta:
+            qx = 0.5 * np.sqrt(1.0+r11-r22-r33)
+        else:
+            nom = (r32-r23)**2+(r12+r21)**2+(r31+r13)**2
+            denom = 3.0-r11+r22+r33
+            qx = 0.5 * np.sqrt(nom/denom)
+        # Compute qy
+        if (-r11+r22-r33) > eta:
+            qy = 0.5 * np.sqrt(1.0-r11+r22-r33)
+        else:
+            nom = (r13-r31)**2+(r12+r21)**2+(r23+r32)**2
+            denom = 3.0+r11-r22+r33
+            qy = 0.5 * np.sqrt(nom/denom)
+        # Compute qz
+        if (-r11-r22+r33) > eta:
+            qz = 0.5 * np.sqrt(1.0-r11-r22+r33)
+        else:
+            nom = (r21-r12)**2+(r31+r13)**2+(r32+r23)**2
+            denom = 3.0+r11+r22-r33
+            qz = 0.5 * np.sqrt(nom/denom)
+        # Return values of quaternion
+        return [qw, qx, qy, qz]
 
 
 class Mahony:
@@ -599,6 +656,10 @@ def test_ChordalDist(debug=False):
     """
     This function tests if two rotation matrices have a valid chordal
     distance (measurable in SO(3)) as defined by Hartley et.al. (2013).
+
+    See Also
+    --------
+    - http://users.cecs.anu.edu.au/~trumpf/pubs/Hartley_Trumpf_Dai_Li.pdf
     """
     # Create first rotation with Euler angles
     ang = np.random.random(3)*360-180                  # 3 Random angles from -180 to +180
@@ -616,35 +677,45 @@ def test_ChordalDist(debug=False):
         print("Unit_Quaternion  =", q,   "\nRotation_2:\n", R2)
         print("Chordal distance =", d)
     # Test if Chordal distance is within the valid range
-    if 0.0 <= d:
-        print("- Valid distance between two rotation matrices ......... [",Texter.MSG_OK,"]")
-    else:
-        print("- Valid distance between two rotation matrices ......... [",Texter.MSG_NO,"]")
+    assertTest( 0.0 <= d, "Valid distance between two rotation matrices")
 
 
 def test_Quaternions(debug=False):
+    """
+    Test construction and manipulation of Quaternions.
+
+    ToDo
+    ----
+
+    - Value comparisons differ at 10*e-15. Set a tolerance.
+    """
     q = Quaternion(np.random.random(3))
     # Test Conjugate
-    q_star = q.conjugate()
-    if (q_star[0]==q.w) and all(q_star[1:]==-q.v):
-        print("- Valid conjugate of a Quaternion ...................... [",Texter.MSG_OK,"]")
-    else:
-        print("- Valid conjugate of a Quaternion ...................... [",Texter.MSG_NO,"]")
+    q_s = q.conjugate()
+    assertTest( (q_s[0]==q.w) and all(q_s[1:]==-q.v) , "Valid conjugate of a Quaternion")
+    # Test Normalization of Quaternion
     p = Quaternion(np.random.random(4))
     p_unit = p.normalize()
-    if abs(lin.norm(p_unit)-1.0)<1e-9:
-        print("- Quaternion is correctly normalized ................... [",Texter.MSG_OK,"]")
-    else:
-        print("- Quaternion is correctly normalized ................... [",Texter.MSG_NO,"]")
-    r = Quaternion([])
-    print("r =", r.q)
+    assertTest( (abs(lin.norm(p_unit)-1.0)<1e-9) , "Quaternion is correctly normalized")
     # Test sum of Quaternions
-    sum_1 = q.q+r.q
-    sum_2 = q.add(r.q)
-    if all(sum_1==sum_2):
-        print("- Valid sum of two Quaternions ......................... [",Texter.MSG_OK,"]")
+    r = Quaternion()
+    assertTest( all((q.q+r.q)==q.add(r.q)) , "Valid sum of two Quaternions")
+    # Conversion to and from Quaternion
+    new_q = Quaternion(np.random.random(4))
+    another_q = Quaternion(new_q.q2R())
+    assertTest( all(new_q.q==another_q.q) , "Conversion to and from rotation matrix")
+
+
+def assertTest(condition=False, text=""):
+    line_length = 54
+    if not type(condition) == bool:
+        condition = bool(condition)
+    if condition is True:
+        result_text = " [ " + Texter.MSG_OK + " ]"
     else:
-        print("- Valid sum of two Quaternions ......................... [",Texter.MSG_NO,"]")
+        result_text = " [ " + Texter.MSG_NO + " ]"
+    complete_line = "- " + text + " " + "."*(line_length-len(text)-1) + result_text
+    print(complete_line)
 
 
 ## MAIN EXECUTION as a script ##
